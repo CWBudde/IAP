@@ -12,6 +12,9 @@
 			<Projects Include="Effect Generator\EffectGenerator.dproj">
 				<Dependencies/>
 			</Projects>
+			<Projects Include="VU Meter\VUMeter.dproj">
+				<Dependencies/>
+			</Projects>
 		</ItemGroup>
 		<ProjectExtensions>
 			<Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -47,14 +50,23 @@
 		<Target Name="EffectGenerator:Make">
 			<MSBuild Targets="Make" Projects="Effect Generator\EffectGenerator.dproj"/>
 		</Target>
+		<Target Name="VUMeter">
+			<MSBuild Projects="VU Meter\VUMeter.dproj"/>
+		</Target>
+		<Target Name="VUMeter:Clean">
+			<MSBuild Targets="Clean" Projects="VU Meter\VUMeter.dproj"/>
+		</Target>
+		<Target Name="VUMeter:Make">
+			<MSBuild Targets="Make" Projects="VU Meter\VUMeter.dproj"/>
+		</Target>
 		<Target Name="Build">
-			<CallTarget Targets="NoiseGenerator;SineGenerator;EffectGenerator"/>
+			<CallTarget Targets="NoiseGenerator;SineGenerator;EffectGenerator;VUMeter"/>
 		</Target>
 		<Target Name="Clean">
-			<CallTarget Targets="NoiseGenerator:Clean;SineGenerator:Clean;EffectGenerator:Clean"/>
+			<CallTarget Targets="NoiseGenerator:Clean;SineGenerator:Clean;EffectGenerator:Clean;VUMeter:Clean"/>
 		</Target>
 		<Target Name="Make">
-			<CallTarget Targets="NoiseGenerator:Make;SineGenerator:Make;EffectGenerator:Make"/>
+			<CallTarget Targets="NoiseGenerator:Make;SineGenerator:Make;EffectGenerator:Make;VUMeter:Make"/>
 		</Target>
 		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')" Project="$(BDS)\Bin\CodeGear.Group.Targets"/>
 	</Project>
