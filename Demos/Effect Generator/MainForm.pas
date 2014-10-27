@@ -33,17 +33,17 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
-    procedure ButtonStartStopClick(Sender: TObject);
-    procedure DriverComboChange(Sender: TObject);
-    procedure ScrollBarVolumeChange(Sender: TObject);
-    procedure ScrollBarPanningChange(Sender: TObject);
-    procedure ScrollBarFilterChange(Sender: TObject);
     procedure ButtonClosedDoorClick(Sender: TObject);
     procedure ButtonDirectClick(Sender: TObject);
-    procedure RadioGroupReverbClick(Sender: TObject);
-    procedure ScrollBarReverbChange(Sender: TObject);
-    procedure RadioButtonLowPassClick(Sender: TObject);
+    procedure ButtonStartStopClick(Sender: TObject);
+    procedure DriverComboChange(Sender: TObject);
     procedure RadioButtonBandpassClick(Sender: TObject);
+    procedure RadioButtonLowPassClick(Sender: TObject);
+    procedure RadioGroupReverbClick(Sender: TObject);
+    procedure ScrollBarFilterChange(Sender: TObject);
+    procedure ScrollBarPanningChange(Sender: TObject);
+    procedure ScrollBarReverbChange(Sender: TObject);
+    procedure ScrollBarVolumeChange(Sender: TObject);
   private
     FIniFileName: TFileName;
     FAmplitude: Double;
@@ -141,6 +141,8 @@ end;
 
 procedure TFormPortAudio.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
+  FPortAudio.Abort;
+
   with TIniFile.Create(FIniFileName) do
     try
       WriteInteger('Audio', 'PortAudio Driver', DriverCombo.ItemIndex);
