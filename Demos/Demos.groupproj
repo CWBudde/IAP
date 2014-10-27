@@ -1,0 +1,60 @@
+﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+		<PropertyGroup>
+			<ProjectGuid>{CB27A685-D55A-4665-BFBF-9C190565739A}</ProjectGuid>
+		</PropertyGroup>
+		<ItemGroup>
+			<Projects Include="Noise Generator\NoiseGenerator.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="Sine Generator\SineGenerator.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="Effect Generator\EffectGenerator.dproj">
+				<Dependencies/>
+			</Projects>
+		</ItemGroup>
+		<ProjectExtensions>
+			<Borland.Personality>Default.Personality.12</Borland.Personality>
+			<Borland.ProjectType/>
+			<BorlandProject>
+				<Default.Personality/>
+			</BorlandProject>
+		</ProjectExtensions>
+		<Target Name="NoiseGenerator">
+			<MSBuild Projects="Noise Generator\NoiseGenerator.dproj"/>
+		</Target>
+		<Target Name="NoiseGenerator:Clean">
+			<MSBuild Targets="Clean" Projects="Noise Generator\NoiseGenerator.dproj"/>
+		</Target>
+		<Target Name="NoiseGenerator:Make">
+			<MSBuild Targets="Make" Projects="Noise Generator\NoiseGenerator.dproj"/>
+		</Target>
+		<Target Name="SineGenerator">
+			<MSBuild Projects="Sine Generator\SineGenerator.dproj"/>
+		</Target>
+		<Target Name="SineGenerator:Clean">
+			<MSBuild Targets="Clean" Projects="Sine Generator\SineGenerator.dproj"/>
+		</Target>
+		<Target Name="SineGenerator:Make">
+			<MSBuild Targets="Make" Projects="Sine Generator\SineGenerator.dproj"/>
+		</Target>
+		<Target Name="EffectGenerator">
+			<MSBuild Projects="Effect Generator\EffectGenerator.dproj"/>
+		</Target>
+		<Target Name="EffectGenerator:Clean">
+			<MSBuild Targets="Clean" Projects="Effect Generator\EffectGenerator.dproj"/>
+		</Target>
+		<Target Name="EffectGenerator:Make">
+			<MSBuild Targets="Make" Projects="Effect Generator\EffectGenerator.dproj"/>
+		</Target>
+		<Target Name="Build">
+			<CallTarget Targets="NoiseGenerator;SineGenerator;EffectGenerator"/>
+		</Target>
+		<Target Name="Clean">
+			<CallTarget Targets="NoiseGenerator:Clean;SineGenerator:Clean;EffectGenerator:Clean"/>
+		</Target>
+		<Target Name="Make">
+			<CallTarget Targets="NoiseGenerator:Make;SineGenerator:Make;EffectGenerator:Make"/>
+		</Target>
+		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')" Project="$(BDS)\Bin\CodeGear.Group.Targets"/>
+	</Project>
