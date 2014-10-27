@@ -2,7 +2,7 @@
 		<PropertyGroup>
 			<ProjectGuid>{768A4D61-CF7B-47C4-8A07-47AED9AC6A32}</ProjectGuid>
 			<MainSource>SineGenerator.dpr</MainSource>
-			<Config Condition="'$(Config)'==''">Release</Config>
+			<Config Condition="'$(Config)'==''">Debug</Config>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
 			<ProjectVersion>13.4</ProjectVersion>
 			<FrameworkType>VCL</FrameworkType>

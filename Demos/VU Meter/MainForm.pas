@@ -107,7 +107,7 @@ begin
     FPortAudio.Close;
     FPortAudio.InputDevice :=
       Integer(DriverCombo.Items.Objects[DriverCombo.ItemIndex]);
-    FPortAudio.InputDevice := -1;
+    FPortAudio.OutputDevice := -1;
     FPortAudio.Open;
 
     BtStartStop.Enabled := True;
@@ -135,7 +135,7 @@ end;
 procedure TFormPortAudio.PortAudioSampleRateChanged(Sender: TObject);
 begin
   // set decay factor to -6dB per second
-  FDecayFactor := Power(dBToAmp(-6), 1 / (FPortAudio.SampleRate));
+  FDecayFactor := Power(dBToAmp(-20), 1 / (FPortAudio.SampleRate));
 end;
 
 procedure TFormPortAudio.TimerTimer(Sender: TObject);
@@ -145,7 +145,7 @@ var
   Level: Single;
 begin
   Level := AmpTodB(FLevel + CDenorm32);
-  LabelLevel.Caption := 'Level: ' + FloatToStr(Level);
+  LabelLevel.Caption := Format('Level: %f dB', [Level]);
   ProgressBar.Position := 100 + Round(Level);
 end;
 
