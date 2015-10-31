@@ -1,7 +1,7 @@
 program NoiseGenerator;
 
 uses
-  FastMM4,
+//  FastMM4,
   Forms,
   MainForm in 'MainForm.pas' {FmPortAudio};
 
