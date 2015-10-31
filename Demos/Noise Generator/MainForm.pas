@@ -45,11 +45,11 @@ resourcestring
 
 procedure TFormPortAudio.FormCreate(Sender: TObject);
 begin
-  FPortAudio := TPortAudioHost.Create;
-  FPortAudio.OnStreamCallback := PortAudioCallback;
-
   FAmplitude := 1;
   FIniFileName := ChangeFileExt(ParamStr(0), '.ini');
+
+  FPortAudio := TPortAudioHost.Create;
+  FPortAudio.OnStreamCallback := PortAudioCallback;
 end;
 
 procedure TFormPortAudio.FormDestroy(Sender: TObject);
@@ -83,14 +83,15 @@ end;
 
 procedure TFormPortAudio.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  with TIniFile.Create(FIniFileName) do
-    try
-      WriteInteger('Audio', 'PortAudio Driver', DriverCombo.ItemIndex);
-      WriteInteger('Layout', 'Left', Left);
-      WriteInteger('Layout', 'Top', Top);
-    finally
-      Free;
-    end;
+  if FIniFileName <> '' then
+    with TIniFile.Create(FIniFileName) do
+      try
+        WriteInteger('Audio', 'PortAudio Driver', DriverCombo.ItemIndex);
+        WriteInteger('Layout', 'Left', Left);
+        WriteInteger('Layout', 'Top', Top);
+      finally
+        Free;
+      end;
 end;
 
 procedure TFormPortAudio.DriverComboChange(Sender: TObject);
