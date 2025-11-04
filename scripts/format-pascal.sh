@@ -1,5 +1,12 @@
 #!/bin/bash
 # Format Pascal source files using ptop (Pascal beautifier)
+#
+# WARNING: ptop has known limitations with modern Pascal syntax:
+# - Large numeric constant arrays may be incorrectly wrapped
+# - Some complex type declarations may cause syntax errors
+# - Advanced language features may not be supported
+#
+# Use with caution and always verify compilation after formatting!
 
 set -e
 
@@ -13,6 +20,20 @@ if ! command -v ptop &> /dev/null; then
     echo "Warning: ptop (Pascal beautifier) not found"
     echo "ptop is included with FPC. Install FPC to use this formatter."
     echo "Skipping Pascal formatting..."
+    exit 0
+fi
+
+echo "WARNING: ptop formatting is EXPERIMENTAL and may break compilation!"
+echo "It has issues with:"
+echo "  - Large numeric constant arrays"
+echo "  - Complex modern Pascal syntax"
+echo ""
+echo "Recommendation: Use 'just clean-whitespace' instead for safe formatting."
+echo ""
+read -p "Continue with ptop formatting? (y/N) " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Aborted. No files were modified."
     exit 0
 fi
 
