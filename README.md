@@ -45,6 +45,29 @@ A cross-platform audio programming library written in pure Object Pascal, origin
 - Lazarus IDE 2.0+ (recommended for GUI applications)
 - Lazarus LCL (Lazarus Component Library) for GUI demos
 
+### Development Tools (Optional but Recommended)
+- **just** - Command runner for task orchestration ([Install](https://github.com/casey/just))
+  - Simplifies building, testing, formatting, and linting
+  - Run `just --list` to see all available commands
+- **dos2unix** - Line ending converter
+- **entr** - File watcher for auto-rebuild (optional)
+
+## Quick Start with Just
+
+If you have `just` installed, you can use these convenient commands:
+
+```bash
+just --list          # List all available commands
+just install-deps    # Install all dependencies (Ubuntu/Debian)
+just build           # Build all demos
+just lint            # Run all linting checks
+just format          # Format all Pascal files
+just ci              # Run all CI checks locally
+just dev             # Format, lint, and build (full dev cycle)
+```
+
+See the [justfile](justfile) for all available commands.
+
 ## Building with Delphi
 
 ### Windows (Delphi)
@@ -380,29 +403,46 @@ All checks run automatically on:
 
 ### Running Checks Locally
 
-Before pushing your changes, you can run the same quality checks locally using the provided scripts:
+Before pushing your changes, you can run the same quality checks locally.
 
-**Check Code Quality:**
+**Using Just (Recommended):**
 ```bash
-./scripts/check-code-quality.sh
+# Run all checks (same as CI)
+just ci
+
+# Quick pre-commit checks
+just pre-commit
+
+# Individual checks
+just lint              # All linting checks
+just lint-syntax       # Syntax only
+just lint-formatting   # Formatting only
+just build            # Build all demos
+just format           # Auto-format code
 ```
-This script checks for:
-- Trailing whitespace
-- Long lines (>120 chars)
-- TODO/FIXME comments
-- Tab characters
-- Platform-specific code without conditionals
-- File encodings
-- FPC syntax errors (if FPC is installed)
-- Line ending consistency
 
-**Build All Demos:**
+**Using Scripts Directly:**
 ```bash
+# Check code quality
+./scripts/check-code-quality.sh
+
+# Check syntax
+./scripts/check-syntax.sh
+
+# Check formatting
+./scripts/check-formatting.sh
+
+# Build all demos
 ./scripts/build-all-demos.sh
 ```
-This script compiles all demo applications and reports any build failures.
 
-Both scripts will exit with an error code if issues are found, making them suitable for pre-commit hooks.
+All scripts exit with an error code if issues are found, making them suitable for pre-commit hooks.
+
+**Setup Pre-commit Hook:**
+```bash
+just setup-hooks
+```
+This installs a git hook that automatically runs `just pre-commit` before each commit.
 
 ## Contributing
 

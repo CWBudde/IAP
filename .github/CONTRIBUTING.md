@@ -138,7 +138,33 @@ Thank you for your interest in contributing to the Immersive Audio Programming (
 
 ## Local Testing
 
-### Running Checks Locally
+### Using Just (Recommended)
+
+The project uses [just](https://github.com/casey/just) as a command runner to orchestrate all development tasks:
+
+```bash
+# Install just (if not already installed)
+# macOS
+brew install just
+# Ubuntu/Debian
+wget -qO - 'https://proget.makedeb.org/debian-feeds/prebuilt-mpr.pub' | gpg --dearmor | sudo tee /usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg 1> /dev/null
+echo "deb [arch=all,$(dpkg --print-architecture) signed-by=/usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg] https://proget.makedeb.org prebuilt-mpr $(lsb_release -cs)" | sudo tee /etc/apt/sources.list.d/prebuilt-mpr.list
+sudo apt update && sudo apt install just
+
+# Common development tasks
+just --list           # List all available commands
+just lint             # Run all linting checks
+just format           # Format all code
+just build            # Build all demos
+just ci               # Run all CI checks locally
+just dev              # Full development cycle (format, lint, build)
+just pre-commit       # Quick pre-commit checks
+
+# Setup pre-commit hook
+just setup-hooks      # Install git pre-commit hook
+```
+
+### Running Checks Manually
 
 Before submitting a PR, run these checks locally:
 
