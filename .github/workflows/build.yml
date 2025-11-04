@@ -107,19 +107,25 @@ jobs:
     - name: Build Sine Generator
       run: |
         cd "Demos\Sine Generator"
-        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -dLCL -dLCLwin32 SineGenerator.dpr
+        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -Fu"C:\lazarus\components\lazutils\lib\x86_64-win64" -Fi"C:\lazarus\lcl\include" -dLCL -dLCLwin32 SineGenerator.dpr
       shell: cmd
 
     - name: Build Noise Generator
       run: |
         cd "Demos\Noise Generator"
-        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -dLCL -dLCLwin32 NoiseGenerator.dpr
+        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -Fu"C:\lazarus\components\lazutils\lib\x86_64-win64" -Fi"C:\lazarus\lcl\include" -dLCL -dLCLwin32 NoiseGenerator.dpr
       shell: cmd
 
     - name: Build VU Meter
       run: |
         cd "Demos\VU Meter"
-        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -dLCL -dLCLwin32 VUMeter.dpr
+        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -Fu"C:\lazarus\components\lazutils\lib\x86_64-win64" -Fi"C:\lazarus\lcl\include" -dLCL -dLCLwin32 VUMeter.dpr
+      shell: cmd
+
+    - name: Build Effect Generator
+      run: |
+        cd "Demos\Effect Generator"
+        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -Fu"C:\lazarus\components\lazutils\lib\x86_64-win64" -Fi"C:\lazarus\lcl\include" -dLCL -dLCLwin32 EffectGenerator.dpr
       shell: cmd
 
     - name: Upload artifacts
