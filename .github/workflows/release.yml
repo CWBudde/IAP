@@ -219,12 +219,25 @@ jobs:
       run: |
         choco install lazarus --version=3.0.0 -y
 
+    - name: Add FPC to PATH
+      run: |
+        echo "C:\lazarus\fpc\3.2.2\bin\x86_64-win64" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      shell: pwsh
+
+    - name: Verify FPC installation
+      run: |
+        fpc -iV
+        echo "FPC found at:"
+        where fpc
+      shell: cmd
+
     - name: Download PortAudio DLL
       run: |
         # Download pre-built PortAudio DLL
         Invoke-WebRequest -Uri "https://github.com/spatialaudio/portaudio-binaries/releases/download/v19.7.0/portaudio-v19.7.0-win64.zip" -OutFile "portaudio.zip"
         Expand-Archive -Path "portaudio.zip" -DestinationPath "portaudio"
       shell: pwsh
+      continue-on-error: true
 
     - name: Build all demos
       run: |
