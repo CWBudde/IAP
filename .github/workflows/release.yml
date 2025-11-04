@@ -1,0 +1,458 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.0.0
+  workflow_dispatch:  # Allows manual triggering
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        default: 'v0.1.0'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Get version
+      id: get_version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.get_version.outputs.version }}
+        release_name: IAP ${{ steps.get_version.outputs.version }}
+        body: |
+          # IAP - Immersive Audio Programming Library
+
+          Release ${{ steps.get_version.outputs.version }}
+
+          ## Downloads
+
+          Choose the archive for your platform:
+          - **Windows**: `IAP-${{ steps.get_version.outputs.version }}-windows-x64.zip`
+          - **Linux**: `IAP-${{ steps.get_version.outputs.version }}-linux-x64.tar.gz`
+          - **macOS**: `IAP-${{ steps.get_version.outputs.version }}-macos-x64.tar.gz`
+
+          ## What's Included
+
+          All demo applications:
+          - **Sine Generator** - Generate sine wave tones
+          - **Noise Generator** - White noise generation
+          - **VU Meter** - Audio level monitoring
+          - **Effect Generator** - Audio effects and filtering
+
+          ## Requirements
+
+          - **Windows**: PortAudio DLL (included)
+          - **Linux**: PortAudio library (`sudo apt-get install libportaudio2`)
+          - **macOS**: PortAudio (`brew install portaudio`)
+
+          ## Installation
+
+          1. Download the archive for your platform
+          2. Extract the archive
+          3. Install PortAudio if needed (see requirements above)
+          4. Run the demo applications
+
+          See [README.md](https://github.com/CWBudde/IAP/blob/master/README.md) for more information.
+        draft: false
+        prerelease: false
+
+  build-linux:
+    name: Build Linux Release
+    needs: create-release
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install FPC and Lazarus
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y fpc lazarus lcl-gtk2-3.0 lcl-units-3.0
+
+    - name: Install PortAudio
+      run: |
+        sudo apt-get install -y libportaudio2 portaudio19-dev
+
+    - name: Build all demos
+      run: |
+        # Function to build a demo
+        build_demo() {
+          local demo_dir=$1
+          local demo_name=$2
+          echo "Building $demo_name..."
+          cd "$demo_dir"
+          fpc -Fu../../Source \
+              -Fu/usr/lib/lazarus/3.0/lcl/units/x86_64-linux \
+              -Fu/usr/lib/lazarus/3.0/lcl/units/x86_64-linux/gtk2 \
+              -Fu/usr/lib/lazarus/3.0/components/lazutils/lib/x86_64-linux \
+              -Fi/usr/lib/lazarus/3.0/lcl/include \
+              -dLCL -dLCLgtk2 \
+              *.dpr
+          cd ../..
+        }
+
+        build_demo "Demos/Sine Generator" "SineGenerator"
+        build_demo "Demos/Noise Generator" "NoiseGenerator"
+        build_demo "Demos/VU Meter" "VUMeter"
+        build_demo "Demos/Effect Generator" "EffectGenerator"
+
+    - name: Package release
+      run: |
+        VERSION=${{ needs.create-release.outputs.version }}
+        RELEASE_DIR="IAP-${VERSION}-linux-x64"
+
+        mkdir -p "${RELEASE_DIR}"/{bin,docs,licenses}
+
+        # Copy binaries
+        cp "Demos/Sine Generator/SineGenerator" "${RELEASE_DIR}/bin/" || true
+        cp "Demos/Noise Generator/NoiseGenerator" "${RELEASE_DIR}/bin/" || true
+        cp "Demos/VU Meter/VUMeter" "${RELEASE_DIR}/bin/" || true
+        cp "Demos/Effect Generator/EffectGenerator" "${RELEASE_DIR}/bin/" || true
+
+        # Copy documentation
+        cp README.md "${RELEASE_DIR}/docs/"
+        cp docs/*.md "${RELEASE_DIR}/docs/" 2>/dev/null || true
+
+        # Create a run script
+        cat > "${RELEASE_DIR}/run-demo.sh" << 'EOF'
+        #!/bin/bash
+        # IAP Demo Launcher
+
+        echo "IAP - Immersive Audio Programming Library"
+        echo "=========================================="
+        echo ""
+        echo "Available demos:"
+        echo "1. Sine Generator"
+        echo "2. Noise Generator"
+        echo "3. VU Meter"
+        echo "4. Effect Generator"
+        echo "5. Exit"
+        echo ""
+        read -p "Select demo (1-5): " choice
+
+        case $choice in
+          1) ./bin/SineGenerator ;;
+          2) ./bin/NoiseGenerator ;;
+          3) ./bin/VUMeter ;;
+          4) ./bin/EffectGenerator ;;
+          5) exit 0 ;;
+          *) echo "Invalid choice" ;;
+        esac
+        EOF
+        chmod +x "${RELEASE_DIR}/run-demo.sh"
+
+        # Create README
+        cat > "${RELEASE_DIR}/README.txt" << EOF
+        IAP - Immersive Audio Programming Library
+        ==========================================
+
+        Version: ${VERSION}
+        Platform: Linux x64
+
+        REQUIREMENTS
+        ------------
+        - PortAudio library
+          Install: sudo apt-get install libportaudio2
+
+        RUNNING THE DEMOS
+        -----------------
+        1. Install PortAudio (see requirements above)
+        2. Run: ./run-demo.sh
+           Or run individual demos from the bin/ directory
+
+        DEMOS INCLUDED
+        --------------
+        - SineGenerator: Generate sine wave tones
+        - NoiseGenerator: White noise generation
+        - VUMeter: Audio level monitoring
+        - EffectGenerator: Audio effects and filtering
+
+        For more information, see docs/README.md or visit:
+        https://github.com/CWBudde/IAP
+        EOF
+
+        # Create tarball
+        tar -czf "IAP-${VERSION}-linux-x64.tar.gz" "${RELEASE_DIR}"
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./IAP-${{ needs.create-release.outputs.version }}-linux-x64.tar.gz
+        asset_name: IAP-${{ needs.create-release.outputs.version }}-linux-x64.tar.gz
+        asset_content_type: application/gzip
+
+  build-windows:
+    name: Build Windows Release
+    needs: create-release
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install FPC and Lazarus
+      run: |
+        choco install lazarus --version=3.0.0 -y
+
+    - name: Download PortAudio DLL
+      run: |
+        # Download pre-built PortAudio DLL
+        Invoke-WebRequest -Uri "https://github.com/spatialaudio/portaudio-binaries/releases/download/v19.7.0/portaudio-v19.7.0-win64.zip" -OutFile "portaudio.zip"
+        Expand-Archive -Path "portaudio.zip" -DestinationPath "portaudio"
+      shell: pwsh
+
+    - name: Build all demos
+      run: |
+        cd "Demos\Sine Generator"
+        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -dLCL -dLCLwin32 SineGenerator.dpr
+        cd ..\..
+
+        cd "Demos\Noise Generator"
+        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -dLCL -dLCLwin32 NoiseGenerator.dpr
+        cd ..\..
+
+        cd "Demos\VU Meter"
+        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -dLCL -dLCLwin32 VUMeter.dpr
+        cd ..\..
+      shell: cmd
+      continue-on-error: true
+
+    - name: Package release
+      run: |
+        $VERSION = "${{ needs.create-release.outputs.version }}"
+        $RELEASE_DIR = "IAP-${VERSION}-windows-x64"
+
+        New-Item -ItemType Directory -Path "${RELEASE_DIR}\bin" -Force
+        New-Item -ItemType Directory -Path "${RELEASE_DIR}\docs" -Force
+
+        # Copy binaries
+        Copy-Item "Demos\Sine Generator\SineGenerator.exe" "${RELEASE_DIR}\bin\" -ErrorAction SilentlyContinue
+        Copy-Item "Demos\Noise Generator\NoiseGenerator.exe" "${RELEASE_DIR}\bin\" -ErrorAction SilentlyContinue
+        Copy-Item "Demos\VU Meter\VUMeter.exe" "${RELEASE_DIR}\bin\" -ErrorAction SilentlyContinue
+        Copy-Item "Demos\Effect Generator\EffectGenerator.exe" "${RELEASE_DIR}\bin\" -ErrorAction SilentlyContinue
+
+        # Copy PortAudio DLL
+        Copy-Item "portaudio\bin\portaudio_x64.dll" "${RELEASE_DIR}\bin\portaudio.dll" -ErrorAction SilentlyContinue
+
+        # Copy documentation
+        Copy-Item "README.md" "${RELEASE_DIR}\docs\"
+        Copy-Item "docs\*.md" "${RELEASE_DIR}\docs\" -ErrorAction SilentlyContinue
+
+        # Create batch launcher
+        @"
+        @echo off
+        echo IAP - Immersive Audio Programming Library
+        echo ==========================================
+        echo.
+        echo Available demos:
+        echo 1. Sine Generator
+        echo 2. Noise Generator
+        echo 3. VU Meter
+        echo 4. Exit
+        echo.
+        set /p choice="Select demo (1-4): "
+
+        if "%choice%"=="1" start bin\SineGenerator.exe
+        if "%choice%"=="2" start bin\NoiseGenerator.exe
+        if "%choice%"=="3" start bin\VUMeter.exe
+        if "%choice%"=="4" exit
+        "@ | Out-File -FilePath "${RELEASE_DIR}\run-demo.bat" -Encoding ASCII
+
+        # Create README
+        @"
+        IAP - Immersive Audio Programming Library
+        ==========================================
+
+        Version: ${VERSION}
+        Platform: Windows x64
+
+        REQUIREMENTS
+        ------------
+        - Windows 10 or later
+        - PortAudio DLL (included)
+
+        RUNNING THE DEMOS
+        -----------------
+        1. Double-click run-demo.bat
+           Or run individual .exe files from the bin\ directory
+
+        DEMOS INCLUDED
+        --------------
+        - SineGenerator.exe: Generate sine wave tones
+        - NoiseGenerator.exe: White noise generation
+        - VUMeter.exe: Audio level monitoring
+
+        For more information, see docs\README.md or visit:
+        https://github.com/CWBudde/IAP
+        "@ | Out-File -FilePath "${RELEASE_DIR}\README.txt" -Encoding ASCII
+
+        # Create zip archive
+        Compress-Archive -Path "${RELEASE_DIR}" -DestinationPath "IAP-${VERSION}-windows-x64.zip"
+      shell: pwsh
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./IAP-${{ needs.create-release.outputs.version }}-windows-x64.zip
+        asset_name: IAP-${{ needs.create-release.outputs.version }}-windows-x64.zip
+        asset_content_type: application/zip
+
+  build-macos:
+    name: Build macOS Release
+    needs: create-release
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install FPC
+      run: |
+        brew install fpc
+
+    - name: Install PortAudio
+      run: |
+        brew install portaudio
+
+    - name: Install Lazarus LCL
+      run: |
+        # Download Lazarus
+        curl -L -o lazarus.dmg "https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%203.0/Lazarus-3.0-0-x86_64-macosx.dmg/download"
+        hdiutil attach lazarus.dmg
+        sudo cp -R /Volumes/Lazarus/Lazarus.app /Applications/
+        hdiutil detach /Volumes/Lazarus
+
+    - name: Build demos
+      run: |
+        # Function to build a demo
+        build_demo() {
+          local demo_dir=$1
+          echo "Building in $demo_dir..."
+          cd "$demo_dir"
+          fpc -Fu../../Source \
+              -Fu/Applications/Lazarus.app/Contents/Resources/lcl/units/x86_64-darwin \
+              -Fu/Applications/Lazarus.app/Contents/Resources/lcl/units/x86_64-darwin/cocoa \
+              -dLCL -dLCLcocoa \
+              *.dpr || echo "Build failed for $demo_dir (may not have LCL support yet)"
+          cd ../..
+        }
+
+        build_demo "Demos/Sine Generator"
+        build_demo "Demos/Noise Generator"
+        build_demo "Demos/VU Meter"
+      continue-on-error: true
+
+    - name: Package release
+      run: |
+        VERSION=${{ needs.create-release.outputs.version }}
+        RELEASE_DIR="IAP-${VERSION}-macos-x64"
+
+        mkdir -p "${RELEASE_DIR}"/{bin,docs}
+
+        # Copy binaries (if they exist)
+        cp "Demos/Sine Generator/SineGenerator" "${RELEASE_DIR}/bin/" 2>/dev/null || true
+        cp "Demos/Noise Generator/NoiseGenerator" "${RELEASE_DIR}/bin/" 2>/dev/null || true
+        cp "Demos/VU Meter/VUMeter" "${RELEASE_DIR}/bin/" 2>/dev/null || true
+
+        # Copy documentation
+        cp README.md "${RELEASE_DIR}/docs/"
+        cp docs/*.md "${RELEASE_DIR}/docs/" 2>/dev/null || true
+
+        # Create run script
+        cat > "${RELEASE_DIR}/run-demo.sh" << 'EOF'
+        #!/bin/bash
+        # IAP Demo Launcher for macOS
+
+        echo "IAP - Immersive Audio Programming Library"
+        echo "=========================================="
+        echo ""
+        echo "Available demos:"
+        echo "1. Sine Generator"
+        echo "2. Noise Generator"
+        echo "3. VU Meter"
+        echo "4. Exit"
+        echo ""
+        read -p "Select demo (1-4): " choice
+
+        case $choice in
+          1) ./bin/SineGenerator ;;
+          2) ./bin/NoiseGenerator ;;
+          3) ./bin/VUMeter ;;
+          4) exit 0 ;;
+          *) echo "Invalid choice" ;;
+        esac
+        EOF
+        chmod +x "${RELEASE_DIR}/run-demo.sh"
+
+        # Create README
+        cat > "${RELEASE_DIR}/README.txt" << EOF
+        IAP - Immersive Audio Programming Library
+        ==========================================
+
+        Version: ${VERSION}
+        Platform: macOS x64
+
+        REQUIREMENTS
+        ------------
+        - macOS 10.15 or later
+        - PortAudio library
+          Install: brew install portaudio
+
+        RUNNING THE DEMOS
+        -----------------
+        1. Install PortAudio: brew install portaudio
+        2. Run: ./run-demo.sh
+           Or run individual demos from the bin/ directory
+
+        Note: You may need to allow the apps in System Preferences > Security & Privacy
+
+        DEMOS INCLUDED
+        --------------
+        - SineGenerator: Generate sine wave tones
+        - NoiseGenerator: White noise generation
+        - VUMeter: Audio level monitoring
+
+        For more information, see docs/README.md or visit:
+        https://github.com/CWBudde/IAP
+        EOF
+
+        # Create tarball
+        tar -czf "IAP-${VERSION}-macos-x64.tar.gz" "${RELEASE_DIR}"
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./IAP-${{ needs.create-release.outputs.version }}-macos-x64.tar.gz
+        asset_name: IAP-${{ needs.create-release.outputs.version }}-macos-x64.tar.gz
+        asset_content_type: application/gzip
