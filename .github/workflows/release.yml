@@ -242,15 +242,19 @@ jobs:
     - name: Build all demos
       run: |
         cd "Demos\Sine Generator"
-        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -dLCL -dLCLwin32 SineGenerator.dpr
+        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -Fu"C:\lazarus\components\lazutils\lib\x86_64-win64" -Fi"C:\lazarus\lcl\include" -dLCL -dLCLwin32 SineGenerator.dpr
         cd ..\..
 
         cd "Demos\Noise Generator"
-        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -dLCL -dLCLwin32 NoiseGenerator.dpr
+        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -Fu"C:\lazarus\components\lazutils\lib\x86_64-win64" -Fi"C:\lazarus\lcl\include" -dLCL -dLCLwin32 NoiseGenerator.dpr
         cd ..\..
 
         cd "Demos\VU Meter"
-        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -dLCL -dLCLwin32 VUMeter.dpr
+        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -Fu"C:\lazarus\components\lazutils\lib\x86_64-win64" -Fi"C:\lazarus\lcl\include" -dLCL -dLCLwin32 VUMeter.dpr
+        cd ..\..
+
+        cd "Demos\Effect Generator"
+        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -Fu"C:\lazarus\components\lazutils\lib\x86_64-win64" -Fi"C:\lazarus\lcl\include" -dLCL -dLCLwin32 EffectGenerator.dpr
         cd ..\..
       shell: cmd
       continue-on-error: true
