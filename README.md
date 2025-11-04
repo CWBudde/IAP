@@ -378,9 +378,44 @@ All checks run automatically on:
 - All pull requests
 - Feature branches (claude/**)
 
+### Running Checks Locally
+
+Before pushing your changes, you can run the same quality checks locally using the provided scripts:
+
+**Check Code Quality:**
+```bash
+./scripts/check-code-quality.sh
+```
+This script checks for:
+- Trailing whitespace
+- Long lines (>120 chars)
+- TODO/FIXME comments
+- Tab characters
+- Platform-specific code without conditionals
+- File encodings
+- FPC syntax errors (if FPC is installed)
+- Line ending consistency
+
+**Build All Demos:**
+```bash
+./scripts/build-all-demos.sh
+```
+This script compiles all demo applications and reports any build failures.
+
+Both scripts will exit with an error code if issues are found, making them suitable for pre-commit hooks.
+
 ## Contributing
 
-Contributions are welcome! Please feel free to submit pull requests or open issues for:
+Contributions are welcome! Please read [CONTRIBUTING.md](.github/CONTRIBUTING.md) for detailed guidelines.
+
+Quick overview:
+- Fork the repository and create a feature branch
+- Follow the Pascal coding standards
+- Run local checks before committing
+- Ensure all CI checks pass
+- Submit a pull request with a clear description
+
+We welcome contributions for:
 - Bug fixes
 - Platform compatibility improvements
 - New DSP algorithms
