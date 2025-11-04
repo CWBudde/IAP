@@ -1,5 +1,9 @@
 unit IAP.AudioFile.Layer3;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 type

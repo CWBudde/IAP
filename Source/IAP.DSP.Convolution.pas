@@ -1,5 +1,9 @@
 unit IAP.DSP.Convolution;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 uses

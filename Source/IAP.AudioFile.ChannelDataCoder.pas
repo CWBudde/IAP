@@ -1,5 +1,9 @@
 unit IAP.AudioFile.ChannelDataCoder;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 uses

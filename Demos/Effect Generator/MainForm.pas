@@ -1,10 +1,19 @@
 unit MainForm;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 uses
+  {$IFDEF FPC}
+  LCLIntf, LCLType,
+  SysUtils, Classes, Types, SyncObjs, Forms, Controls, StdCtrls, ExtCtrls,
+  {$ELSE}
   WinApi.Windows, System.SysUtils, System.Classes, System.Types,
   System.SyncObjs, Vcl.Forms, Vcl.Controls, Vcl.StdCtrls, Vcl.ExtCtrls,
+  {$ENDIF}
   IAP.Types, IAP.AudioFile.MPEG, IAP.PortAudio.Host, IAP.PortAudio.Types,
   IAP.DSP.Filter, IAP.DSP.FilterSimple, IAP.DSP.FilterBasics,
   IAP.DSP.Convolution, IAP.AudioFile.WAV;
@@ -68,7 +77,7 @@ var
 
 implementation
 
-{$R *.DFM}
+{$R *.dfm}
 
 uses
   Inifiles, Math, IAP.Math, IAP.Math.HalfFloat;

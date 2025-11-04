@@ -1,9 +1,18 @@
 unit MainForm;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 uses
-  Windows, SysUtils, Forms, Classes, Controls, StdCtrls, IAP.PortAudio.Host,
+  {$IFDEF FPC}
+  LCLIntf, LCLType,
+  {$ELSE}
+  Windows,
+  {$ENDIF}
+  SysUtils, Forms, Classes, Controls, StdCtrls, IAP.PortAudio.Host,
   IAP.PortAudio.Types, IAP.Types, IAP.DSP.SimpleOscillator;
 
 type
@@ -38,7 +47,7 @@ var
 
 implementation
 
-{$R *.DFM}
+{$R *.dfm}
 
 uses
   Inifiles, Math, IAP.Math;
