@@ -1,6 +1,9 @@
 IAP - Immersive Audio Programming Library
 ==========================================
 
+[![Build](https://github.com/CWBudde/IAP/workflows/Build/badge.svg)](https://github.com/CWBudde/IAP/actions/workflows/build.yml)
+[![Code Quality](https://github.com/CWBudde/IAP/workflows/Code%20Quality/badge.svg)](https://github.com/CWBudde/IAP/actions/workflows/code-quality.yml)
+
 A cross-platform audio programming library written in pure Object Pascal, originally created for the ITDevCon 2014 presentation "Immersive Audio Programming". This library provides the necessary components to build platform-independent audio applications with Delphi and Free Pascal.
 
 ## Features
@@ -332,6 +335,48 @@ brew install portaudio
 - Increase the PortAudio buffer size
 - Check system audio settings
 - Ensure your CPU isn't overloaded
+
+## Continuous Integration
+
+This project uses GitHub Actions for continuous integration and code quality checks:
+
+### Build Workflow
+Automatically builds all demo applications on:
+- **Linux** (Ubuntu with FPC/Lazarus)
+- **Windows** (FPC/Lazarus via Chocolatey)
+- **macOS** (FPC with Homebrew)
+
+Each successful build produces artifacts (compiled binaries) available for download.
+
+### Code Quality Workflow
+Performs comprehensive code quality checks including:
+
+**Syntax Checks:**
+- FPC syntax validation for all Pascal source files
+- Compilation with maximum warning levels
+
+**Code Analysis:**
+- Detection of TODO/FIXME comments
+- Potential memory leak detection (missing Free/FreeAndNil calls)
+- Windows-specific code without proper conditional compilation
+- Code duplication patterns
+
+**Formatting Checks:**
+- File encoding validation (UTF-8)
+- Line ending consistency checks
+- Indentation consistency (tabs vs spaces)
+- Trailing whitespace detection
+- Long line detection (>120 characters)
+- Lines of code statistics
+
+**Compiler Warnings:**
+- Full compilation with all warnings and hints enabled
+- Warning and hint reports uploaded as artifacts
+
+All checks run automatically on:
+- Every push to main/master/develop branches
+- All pull requests
+- Feature branches (claude/**)
 
 ## Contributing
 

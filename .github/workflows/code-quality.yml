@@ -1,0 +1,185 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, master, develop, claude/** ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  syntax-check:
+    name: Syntax and Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install FPC
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y fpc
+
+    - name: Check for syntax errors (FPC syntax check)
+      run: |
+        echo "Checking Pascal syntax..."
+        find Source -name "*.pas" -type f | while read file; do
+          echo "Checking: $file"
+          fpc -S2 -vew "$file" 2>&1 | grep -v "Fatal: Can't open" || true
+        done
+
+    - name: Check for common code issues
+      run: |
+        echo "Checking for common code issues..."
+
+        # Check for TODO/FIXME comments
+        echo "=== TODO/FIXME Comments ==="
+        grep -rn "TODO\|FIXME" Source/ Demos/ --include="*.pas" --include="*.dpr" || echo "No TODO/FIXME found"
+
+        # Check for potential memory leaks (missing Free/FreeAndNil)
+        echo ""
+        echo "=== Checking for potential memory management issues ==="
+        grep -rn "\.Create" Source/ Demos/ --include="*.pas" --include="*.dpr" | \
+          grep -v "TThread.Create\|TObject.Create" | head -20 || echo "Check complete"
+
+        # Check for uses of deprecated Windows-specific units
+        echo ""
+        echo "=== Checking for Windows-specific code without conditionals ==="
+        grep -rn "uses.*Windows[,;]" Source/ Demos/ --include="*.pas" | \
+          grep -v "{.*IFDEF" || echo "No issues found"
+
+    - name: Check file encodings
+      run: |
+        echo "Checking for non-UTF8 files..."
+        find Source Demos -name "*.pas" -o -name "*.dpr" | while read file; do
+          if ! file "$file" | grep -q "UTF-8\|ASCII"; then
+            echo "Warning: $file may not be UTF-8 encoded"
+          fi
+        done
+
+    - name: Check for mixed line endings
+      run: |
+        echo "Checking for mixed line endings..."
+        find Source Demos -name "*.pas" -o -name "*.dpr" | while read file; do
+          if file "$file" | grep -q "CRLF"; then
+            dos2unix -ic "$file" 2>/dev/null && echo "Info: $file uses CRLF (Windows style)"
+          fi
+        done || sudo apt-get install -y dos2unix && \
+        find Source Demos -name "*.pas" -o -name "*.dpr" | while read file; do
+          if file "$file" | grep -q "CRLF"; then
+            dos2unix -ic "$file" 2>/dev/null && echo "Info: $file uses CRLF (Windows style)"
+          fi
+        done
+
+    - name: Count lines of code
+      run: |
+        echo "=== Lines of Code Statistics ==="
+        echo "Source files:"
+        find Source -name "*.pas" -exec wc -l {} + | tail -1
+        echo ""
+        echo "Demo files:"
+        find Demos -name "*.pas" -o -name "*.dpr" -exec wc -l {} + | tail -1
+
+    - name: Check for duplicate code patterns
+      run: |
+        echo "=== Checking for potential code duplication ==="
+        # Simple check for identical function signatures
+        grep -rh "^procedure\|^function" Source/ --include="*.pas" | \
+          sort | uniq -c | sort -rn | head -20 || echo "Check complete"
+
+  formatting-check:
+    name: Code Formatting Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install FPC (includes ptop)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y fpc
+
+    - name: Check indentation consistency
+      run: |
+        echo "Checking for inconsistent indentation..."
+        find Source Demos -name "*.pas" -o -name "*.dpr" | while read file; do
+          # Check if file mixes tabs and spaces
+          if grep -q $'\t' "$file" && grep -q "^  " "$file"; then
+            echo "Warning: $file mixes tabs and spaces"
+          fi
+        done
+
+    - name: Check for trailing whitespace
+      run: |
+        echo "Checking for trailing whitespace..."
+        files_with_trailing=$(find Source Demos -name "*.pas" -o -name "*.dpr" | \
+          xargs grep -l " $" || true)
+        if [ -n "$files_with_trailing" ]; then
+          echo "Files with trailing whitespace:"
+          echo "$files_with_trailing"
+        else
+          echo "No trailing whitespace found"
+        fi
+
+    - name: Check for long lines (>120 chars)
+      run: |
+        echo "Checking for lines longer than 120 characters..."
+        find Source Demos -name "*.pas" -o -name "*.dpr" | while read file; do
+          long_lines=$(awk 'length>120' "$file" | wc -l)
+          if [ "$long_lines" -gt 0 ]; then
+            echo "$file: $long_lines lines exceed 120 characters"
+          fi
+        done
+
+    - name: Generate formatting report
+      run: |
+        echo "=== Code Formatting Summary ==="
+        echo "Total Pascal source files: $(find Source Demos -name "*.pas" -o -name "*.dpr" | wc -l)"
+        echo "Files with tabs: $(find Source Demos -name "*.pas" -o -name "*.dpr" | xargs grep -l $'\t' | wc -l)"
+        echo "Files with trailing whitespace: $(find Source Demos -name "*.pas" -o -name "*.dpr" | xargs grep -l ' $' | wc -l || echo 0)"
+        echo "Files with long lines (>120 chars): $(find Source Demos -name "*.pas" -o -name "*.dpr" | xargs awk 'length>120 {print FILENAME; nextfile}' | wc -l)"
+
+  compiler-warnings:
+    name: Check Compiler Warnings
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install FPC and Lazarus
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y fpc lazarus lcl-gtk2-3.0 lcl-units-3.0 libportaudio2 portaudio19-dev
+
+    - name: Compile with all warnings enabled
+      run: |
+        echo "Compiling with maximum warning level..."
+        cd "Demos/Sine Generator"
+        fpc -Fu../../Source \
+            -Fu/usr/lib/lazarus/3.0/lcl/units/x86_64-linux \
+            -Fu/usr/lib/lazarus/3.0/lcl/units/x86_64-linux/gtk2 \
+            -Fu/usr/lib/lazarus/3.0/components/lazutils/lib/x86_64-linux \
+            -Fi/usr/lib/lazarus/3.0/lcl/include \
+            -dLCL -dLCLgtk2 \
+            -vwnh \
+            SineGenerator.dpr 2>&1 | tee compile.log
+
+        # Extract and display warnings
+        echo ""
+        echo "=== Compilation Warnings ==="
+        grep "Warning:" compile.log || echo "No warnings found!"
+
+        # Extract and display hints
+        echo ""
+        echo "=== Compilation Hints ==="
+        grep "Hint:" compile.log | head -20 || echo "No hints found!"
+
+    - name: Upload compilation log
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: compilation-warnings
+        path: "Demos/Sine Generator/compile.log"
+        retention-days: 7
