@@ -3,8 +3,20 @@ IAP - Immersive Audio Programming Library
 
 [![Build](https://github.com/CWBudde/IAP/workflows/Build/badge.svg)](https://github.com/CWBudde/IAP/actions/workflows/build.yml)
 [![Code Quality](https://github.com/CWBudde/IAP/workflows/Code%20Quality/badge.svg)](https://github.com/CWBudde/IAP/actions/workflows/code-quality.yml)
+[![Release](https://github.com/CWBudde/IAP/workflows/Release/badge.svg)](https://github.com/CWBudde/IAP/actions/workflows/release.yml)
+[![Latest Release](https://img.shields.io/github/v/release/CWBudde/IAP)](https://github.com/CWBudde/IAP/releases/latest)
 
 A cross-platform audio programming library written in pure Object Pascal, originally created for the ITDevCon 2014 presentation "Immersive Audio Programming". This library provides the necessary components to build platform-independent audio applications with Delphi and Free Pascal.
+
+## 📦 Quick Download
+
+Pre-built demo applications are available for download:
+
+- **[Download for Windows](https://github.com/CWBudde/IAP/releases/latest)** - Includes PortAudio DLL
+- **[Download for Linux](https://github.com/CWBudde/IAP/releases/latest)** - Requires `libportaudio2`
+- **[Download for macOS](https://github.com/CWBudde/IAP/releases/latest)** - Requires PortAudio via Homebrew
+
+Each release includes all 4 demo applications ready to run!
 
 ## Features
 
