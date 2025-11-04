@@ -7,7 +7,12 @@ unit IAP.PortAudio.Binding;
 interface
 
 uses
-  WinApi.Windows, System.Types, IAP.PortAudio.Types;
+  {$IFDEF FPC}
+  Windows, Types,
+  {$ELSE}
+  WinApi.Windows, System.Types,
+  {$ENDIF}
+  IAP.PortAudio.Types;
 
 type
   TPa_GetVersion = function: LongInt; cdecl;
