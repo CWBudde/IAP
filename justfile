@@ -47,12 +47,16 @@ check-leaks:
 
 # === Formatting ===
 
-# Format all Pascal source files
-format: format-pascal clean-whitespace
+# Format all Pascal source files (safe - whitespace only)
+format: clean-whitespace
+    @echo "✓ Safe formatting complete (whitespace cleanup only)"
+    @echo "Note: For full Pascal formatting with ptop, run 'just format-pascal'"
+    @echo "      (WARNING: ptop may break compilation - use with caution!)"
 
-# Format Pascal files using ptop (Pascal beautifier)
+# Format Pascal files using ptop (Pascal beautifier) - EXPERIMENTAL
 format-pascal:
-    @echo "=== Formatting Pascal Files with ptop ==="
+    @echo "=== Formatting Pascal Files with ptop (EXPERIMENTAL) ==="
+    @echo "WARNING: This may break compilation! Use with caution."
     @./scripts/format-pascal.sh
 
 # Remove trailing whitespace from all source files
