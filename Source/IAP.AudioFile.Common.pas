@@ -1,5 +1,9 @@
 unit IAP.AudioFile.Common;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 uses

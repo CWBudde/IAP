@@ -1,9 +1,18 @@
 unit IAP.DSP.FftReal2Complex;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 uses
-  System.Classes, IAP.Types, IAP.Math.Complex;
+  {$IFDEF FPC}
+  Classes,
+  {$ELSE}
+  System.Classes,
+  {$ENDIF}
+  IAP.Types, IAP.Math.Complex;
 
 type
   TFftAutoScaleType = (astDivideFwdByN = 1, astDivideInvByN = 2,
@@ -178,7 +187,11 @@ type
 implementation
 
 uses
+  {$IFDEF FPC}
+  Math, SysUtils;
+  {$ELSE}
   System.Math, System.SysUtils;
+  {$ENDIF}
 
 resourcestring
   RCStrNotSupported = 'not supported yet';

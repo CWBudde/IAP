@@ -1,5 +1,9 @@
 unit IAP.PortAudio.Binding;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 uses

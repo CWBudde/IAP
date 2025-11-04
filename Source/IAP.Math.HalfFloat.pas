@@ -1,5 +1,9 @@
 unit IAP.Math.HalfFloat;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 type

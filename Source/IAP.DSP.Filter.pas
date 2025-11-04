@@ -1,5 +1,9 @@
 unit IAP.DSP.Filter;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 uses

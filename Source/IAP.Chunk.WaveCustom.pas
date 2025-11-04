@@ -1,5 +1,9 @@
 unit IAP.Chunk.WaveCustom;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 uses

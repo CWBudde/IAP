@@ -1,5 +1,9 @@
 unit IAP.DSP.SimpleOscillator;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 uses
