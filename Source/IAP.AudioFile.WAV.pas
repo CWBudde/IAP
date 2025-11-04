@@ -1,10 +1,18 @@
 unit IAP.AudioFile.WAV;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 uses
-  System.Classes, System.Contnrs, System.SysUtils, IAP.Types,
-  IAP.AudioFile.Common, IAP.Chunk.Classes, IAP.Chunk.WaveBasic,
+  {$IFDEF FPC}
+  Classes, Contnrs, SysUtils,
+  {$ELSE}
+  System.Classes, System.Contnrs, System.SysUtils,
+  {$ENDIF}
+  IAP.Types, IAP.AudioFile.Common, IAP.Chunk.Classes, IAP.Chunk.WaveBasic,
   IAP.Chunk.WaveCustom, IAP.AudioFile.ChannelDataCoder;
 
 type

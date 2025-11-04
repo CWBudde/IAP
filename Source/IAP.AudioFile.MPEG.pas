@@ -1,12 +1,21 @@
 unit IAP.AudioFile.MPEG;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 {$DEFINE SEEK_STOP}
 {$DEFINE FastCalculation}
 
 uses
-  System.SysUtils, System.Classes, IAP.Types, IAP.AudioFile.Layer3;
+  {$IFDEF FPC}
+  SysUtils, Classes,
+  {$ELSE}
+  System.SysUtils, System.Classes,
+  {$ENDIF}
+  IAP.Types, IAP.AudioFile.Layer3;
 
 type
   TSyncMode = (smInitialSync, imStrictSync);

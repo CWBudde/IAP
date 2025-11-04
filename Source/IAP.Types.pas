@@ -1,5 +1,9 @@
 unit IAP.Types;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 uses

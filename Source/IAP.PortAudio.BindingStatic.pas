@@ -1,9 +1,13 @@
-unit IAP_PortAudioBindingStatic;
+unit IAP.PortAudio.BindingStatic;
+
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
 
 interface
 
 uses
-  Types, IAP_PortAudioTypes;
+  Types, IAP.PortAudio.Types;
 
 const
 {$IF Defined(MSWINDOWS)}
