@@ -1,5 +1,9 @@
 unit IAP.Math.Complex;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 type

@@ -1,0 +1,16 @@
+# FPC/Lazarus compilation artifacts
+*.o
+*.ppu
+*.compiled
+*.rsj
+*.or
+*.res
+link*.res
+
+# Binaries (executables)
+Demos/*/SineGenerator
+Demos/*/NoiseGenerator
+Demos/*/EffectGenerator
+Demos/*/VUMeter
+Source/*.o
+Source/*.ppu

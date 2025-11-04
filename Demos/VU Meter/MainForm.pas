@@ -1,11 +1,20 @@
 unit MainForm;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 uses
+  {$IFDEF FPC}
+  LCLIntf, LCLType,
+  SysUtils, Classes, Forms, Controls, StdCtrls, ComCtrls, ExtCtrls,
+  {$ELSE}
   WinApi.Windows, System.SysUtils, System.Classes, Vcl.Forms, Vcl.Controls,
-  Vcl.StdCtrls, Vcl.ComCtrls, Vcl.ExtCtrls, IAP.PortAudio.Host,
-  IAP.PortAudio.Types, IAP.Types;
+  Vcl.StdCtrls, Vcl.ComCtrls, Vcl.ExtCtrls,
+  {$ENDIF}
+  IAP.PortAudio.Host, IAP.PortAudio.Types, IAP.Types;
 
 type
   TFormPortAudio = class(TForm)
@@ -38,7 +47,7 @@ var
 
 implementation
 
-{$R *.DFM}
+{$R *.dfm}
 
 uses
   Inifiles, Math, IAP.Math;

@@ -1,5 +1,9 @@
 unit IAP.Math;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 uses
@@ -41,7 +45,7 @@ function Sigmoid(const Input: Double): Double; inline;
 function Sinc(const Input: Double): Double; inline;
 
 function EvaluatePolynomial(Coefficients: array of Double; Input: Double): Double;
-function EvaluateRational(Nominator, Denominator: array of Double; Input: Double): Double;
+function EvaluateRational(Nominator, Denominator: array of Double; Input: Double): Double; overload;
 
 procedure QuickSort32(SortData: PIAPSingleFixedArray; L, R: Integer);
 procedure QuickSort64(SortData: PIAPDoubleFixedArray; L, R: Integer);

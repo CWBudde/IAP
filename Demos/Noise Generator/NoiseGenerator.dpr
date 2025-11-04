@@ -1,11 +1,21 @@
 program NoiseGenerator;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 uses
-//  FastMM4,
+  {$IFDEF FPC}
+  Interfaces, // required for LCL on FPC
+  {$ELSE}
+  FastMM4,
+  {$ENDIF}
   Forms,
   MainForm in 'MainForm.pas' {FmPortAudio};
 
+{$IFNDEF FPC}
 {$R *.RES}
+{$ENDIF}
 
 begin
   Application.Initialize;

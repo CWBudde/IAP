@@ -1,0 +1,175 @@
+name: Build
+
+on:
+  push:
+    branches: [ main, master, develop, claude/** ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  build-linux:
+    name: Build on Linux (FPC)
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install FPC and Lazarus
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y fpc lazarus lcl-gtk2-3.0 lcl-units-3.0
+
+    - name: Install PortAudio
+      run: |
+        sudo apt-get install -y libportaudio2 portaudio19-dev
+
+    - name: Display FPC version
+      run: fpc -iV
+
+    - name: Build Sine Generator
+      run: |
+        cd "Demos/Sine Generator"
+        fpc -Fu../../Source \
+            -Fu/usr/lib/lazarus/3.0/lcl/units/x86_64-linux \
+            -Fu/usr/lib/lazarus/3.0/lcl/units/x86_64-linux/gtk2 \
+            -Fu/usr/lib/lazarus/3.0/components/lazutils/lib/x86_64-linux \
+            -Fi/usr/lib/lazarus/3.0/lcl/include \
+            -dLCL -dLCLgtk2 \
+            SineGenerator.dpr
+
+    - name: Build Noise Generator
+      run: |
+        cd "Demos/Noise Generator"
+        fpc -Fu../../Source \
+            -Fu/usr/lib/lazarus/3.0/lcl/units/x86_64-linux \
+            -Fu/usr/lib/lazarus/3.0/lcl/units/x86_64-linux/gtk2 \
+            -Fu/usr/lib/lazarus/3.0/components/lazutils/lib/x86_64-linux \
+            -Fi/usr/lib/lazarus/3.0/lcl/include \
+            -dLCL -dLCLgtk2 \
+            NoiseGenerator.dpr
+
+    - name: Build VU Meter
+      run: |
+        cd "Demos/VU Meter"
+        fpc -Fu../../Source \
+            -Fu/usr/lib/lazarus/3.0/lcl/units/x86_64-linux \
+            -Fu/usr/lib/lazarus/3.0/lcl/units/x86_64-linux/gtk2 \
+            -Fu/usr/lib/lazarus/3.0/components/lazutils/lib/x86_64-linux \
+            -Fi/usr/lib/lazarus/3.0/lcl/include \
+            -dLCL -dLCLgtk2 \
+            VUMeter.dpr
+
+    - name: Build Effect Generator
+      run: |
+        cd "Demos/Effect Generator"
+        fpc -Fu../../Source \
+            -Fu/usr/lib/lazarus/3.0/lcl/units/x86_64-linux \
+            -Fu/usr/lib/lazarus/3.0/lcl/units/x86_64-linux/gtk2 \
+            -Fu/usr/lib/lazarus/3.0/components/lazutils/lib/x86_64-linux \
+            -Fi/usr/lib/lazarus/3.0/lcl/include \
+            -dLCL -dLCLgtk2 \
+            EffectGenerator.dpr
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: linux-binaries
+        path: |
+          Demos/*/SineGenerator
+          Demos/*/NoiseGenerator
+          Demos/*/VUMeter
+          Demos/*/EffectGenerator
+        retention-days: 7
+
+  build-windows:
+    name: Build on Windows (FPC)
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install FPC and Lazarus
+      run: |
+        choco install lazarus --version=3.0.0 -y
+
+    - name: Add FPC to PATH
+      run: |
+        echo "C:\lazarus\fpc\3.2.2\bin\x86_64-win64" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      shell: pwsh
+
+    - name: Display FPC version
+      run: fpc -iV
+      shell: cmd
+
+    - name: Build Sine Generator
+      run: |
+        cd "Demos\Sine Generator"
+        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -Fu"C:\lazarus\components\lazutils\lib\x86_64-win64" -Fi"C:\lazarus\lcl\include" -dLCL -dLCLwin32 SineGenerator.dpr
+      shell: cmd
+
+    - name: Build Noise Generator
+      run: |
+        cd "Demos\Noise Generator"
+        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -Fu"C:\lazarus\components\lazutils\lib\x86_64-win64" -Fi"C:\lazarus\lcl\include" -dLCL -dLCLwin32 NoiseGenerator.dpr
+      shell: cmd
+
+    - name: Build VU Meter
+      run: |
+        cd "Demos\VU Meter"
+        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -Fu"C:\lazarus\components\lazutils\lib\x86_64-win64" -Fi"C:\lazarus\lcl\include" -dLCL -dLCLwin32 VUMeter.dpr
+      shell: cmd
+
+    - name: Build Effect Generator
+      run: |
+        cd "Demos\Effect Generator"
+        fpc -Fu..\..\Source -Fu"C:\lazarus\lcl\units\x86_64-win64" -Fu"C:\lazarus\lcl\units\x86_64-win64\win32" -Fu"C:\lazarus\components\lazutils\lib\x86_64-win64" -Fi"C:\lazarus\lcl\include" -dLCL -dLCLwin32 EffectGenerator.dpr
+      shell: cmd
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: windows-binaries
+        path: |
+          Demos\*\*.exe
+        retention-days: 7
+
+  build-macos:
+    name: Build on macOS (FPC)
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install FPC
+      run: |
+        brew install fpc
+
+    - name: Install PortAudio
+      run: |
+        brew install portaudio
+
+    - name: Display FPC version
+      run: fpc -iV
+
+    - name: Install Lazarus (LCL only)
+      run: |
+        # Download and extract Lazarus for LCL units
+        curl -L -o lazarus.dmg "https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%203.0/Lazarus-3.0-0-x86_64-macosx.dmg/download"
+        hdiutil attach lazarus.dmg
+        sudo cp -R /Volumes/Lazarus/Lazarus.app /Applications/
+        hdiutil detach /Volumes/Lazarus
+
+    - name: Build Sine Generator
+      run: |
+        cd "Demos/Sine Generator"
+        fpc -Fu../../Source \
+            -Fu/Applications/Lazarus.app/Contents/Resources/lcl/units/x86_64-darwin \
+            -Fu/Applications/Lazarus.app/Contents/Resources/lcl/units/x86_64-darwin/cocoa \
+            -dLCL -dLCLcocoa \
+            SineGenerator.dpr || echo "Build may fail on macOS - continuing"
+      continue-on-error: true

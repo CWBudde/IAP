@@ -1,10 +1,15 @@
 unit IAP.PortAudio.Host;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 uses
-  SysUtils, Classes, IAP.Types, {$IFDEF MSWindows} IAP.PortAudio.Binding,
-  {$ENDIF} {$IFDEF MacOS} IAP.PortAudio.BindingStatic, {$ENDIF}
+  SysUtils, Classes, IAP.Types,
+  {$IFDEF MSWindows} IAP.PortAudio.Binding, {$ENDIF}
+  {$IF Defined(MacOS) or Defined(UNIX)} IAP.PortAudio.BindingStatic, {$ENDIF}
   IAP.PortAudio.Types;
 
 type

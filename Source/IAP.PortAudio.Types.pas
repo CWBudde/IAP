@@ -1,5 +1,9 @@
 unit IAP.PortAudio.Types;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 interface
 
 type
