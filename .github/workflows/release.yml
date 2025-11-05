@@ -2,14 +2,9 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*.*.*'  # Triggers on version tags like v1.0.0
-  workflow_dispatch:  # Allows manual triggering
-    inputs:
-      version:
-        description: 'Release version (e.g., v1.0.0)'
-        required: true
-        default: 'v0.1.0'
+    branches:
+      - master  # Only build when changes are merged to master
+      - main    # Support both master and main branch names
 
 jobs:
   create-release:
@@ -26,11 +21,10 @@ jobs:
     - name: Get version
       id: get_version
       run: |
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-        else
-          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-        fi
+        # Generate version from date and short commit SHA
+        DATE_VERSION=$(date +%Y.%m.%d)
+        COMMIT_SHA=$(git rev-parse --short HEAD)
+        echo "version=v${DATE_VERSION}-${COMMIT_SHA}" >> $GITHUB_OUTPUT
 
     - name: Create Release
       id: create_release
@@ -43,7 +37,9 @@ jobs:
         body: |
           # IAP - Immersive Audio Programming Library
 
-          Release ${{ steps.get_version.outputs.version }}
+          Automated build ${{ steps.get_version.outputs.version }} from master branch
+
+          Built from commit: ${{ github.sha }}
 
           ## Downloads
 
@@ -75,7 +71,7 @@ jobs:
 
           See [README.md](https://github.com/CWBudde/IAP/blob/master/README.md) for more information.
         draft: false
-        prerelease: false
+        prerelease: true
 
   build-linux:
     name: Build Linux Release
