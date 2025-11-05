@@ -145,9 +145,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install FPC
-      run: |
-        brew install fpc
+    - name: Setup Lazarus
+      uses: gcarreno/setup-lazarus@v3
+      with:
+        lazarus-version: "3.0"
+        with-cache: true
 
     - name: Install PortAudio
       run: |
@@ -156,32 +158,55 @@ jobs:
     - name: Display FPC version
       run: fpc -iV
 
-    - name: Install Lazarus (LCL only)
+    - name: Detect architecture and set variables
+      id: arch
       run: |
-        # Clone Lazarus sources from GitLab (more reliable than SourceForge)
-        git clone --depth 1 --branch lazarus_3_0 https://gitlab.com/freepascal.org/lazarus/lazarus.git /tmp/lazarus
+        ARCH=$(uname -m)
+        if [ "$ARCH" = "arm64" ]; then
+          echo "fpc_arch=aarch64" >> $GITHUB_OUTPUT
+          echo "darwin_arch=aarch64-darwin" >> $GITHUB_OUTPUT
+        else
+          echo "fpc_arch=x86_64" >> $GITHUB_OUTPUT
+          echo "darwin_arch=x86_64-darwin" >> $GITHUB_OUTPUT
+        fi
+        echo "Detected architecture: $ARCH"
 
-        # Build LCL for macOS Cocoa
-        cd /tmp/lazarus/lcl
-        make LCL_PLATFORM=cocoa
+    - name: Find Lazarus paths
+      id: lazarus_paths
+      run: |
+        # Find Lazarus installation directory
+        if [ -d "/usr/local/share/lazarus" ]; then
+          LAZARUS_DIR="/usr/local/share/lazarus"
+        elif [ -d "$HOME/.lazarus" ]; then
+          LAZARUS_DIR="$HOME/.lazarus"
+        elif [ -d "/Applications/Lazarus" ]; then
+          LAZARUS_DIR="/Applications/Lazarus"
+        else
+          # Try to find where lazbuild is
+          LAZBUILD_PATH=$(which lazbuild)
+          if [ -n "$LAZBUILD_PATH" ]; then
+            LAZARUS_DIR=$(dirname $(dirname $LAZBUILD_PATH))
+          else
+            echo "Error: Could not find Lazarus installation"
+            exit 1
+          fi
+        fi
+        echo "lazarus_dir=$LAZARUS_DIR" >> $GITHUB_OUTPUT
+        echo "Found Lazarus at: $LAZARUS_DIR"
 
-        # Also build lazutils
-        cd /tmp/lazarus/components/lazutils
-        make
-
-        # Create directory structure for easier path references
-        sudo mkdir -p /usr/local/share/lazarus
-        sudo cp -R /tmp/lazarus/lcl /usr/local/share/lazarus/
-        sudo cp -R /tmp/lazarus/components /usr/local/share/lazarus/
+        # List directory structure for debugging
+        ls -la "$LAZARUS_DIR" || true
+        ls -la "$LAZARUS_DIR/lcl/units" || true
 
     - name: Build Sine Generator
       run: |
         cd "Demos/Sine Generator"
+        lazbuild --add-package-link ${{ steps.lazarus_paths.outputs.lazarus_dir }}/components/lazutils/lazutils.lpk
         fpc -Fu../../Source \
-            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin \
-            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin/cocoa \
-            -Fu/usr/local/share/lazarus/components/lazutils/lib/x86_64-darwin \
-            -Fi/usr/local/share/lazarus/lcl/include \
+            -Fu${{ steps.lazarus_paths.outputs.lazarus_dir }}/lcl/units/${{ steps.arch.outputs.darwin_arch }} \
+            -Fu${{ steps.lazarus_paths.outputs.lazarus_dir }}/lcl/units/${{ steps.arch.outputs.darwin_arch }}/cocoa \
+            -Fu${{ steps.lazarus_paths.outputs.lazarus_dir }}/components/lazutils/lib/${{ steps.arch.outputs.darwin_arch }} \
+            -Fi${{ steps.lazarus_paths.outputs.lazarus_dir }}/lcl/include \
             -dLCL -dLCLcocoa \
             SineGenerator.dpr
 
@@ -189,10 +214,10 @@ jobs:
       run: |
         cd "Demos/Noise Generator"
         fpc -Fu../../Source \
-            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin \
-            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin/cocoa \
-            -Fu/usr/local/share/lazarus/components/lazutils/lib/x86_64-darwin \
-            -Fi/usr/local/share/lazarus/lcl/include \
+            -Fu${{ steps.lazarus_paths.outputs.lazarus_dir }}/lcl/units/${{ steps.arch.outputs.darwin_arch }} \
+            -Fu${{ steps.lazarus_paths.outputs.lazarus_dir }}/lcl/units/${{ steps.arch.outputs.darwin_arch }}/cocoa \
+            -Fu${{ steps.lazarus_paths.outputs.lazarus_dir }}/components/lazutils/lib/${{ steps.arch.outputs.darwin_arch }} \
+            -Fi${{ steps.lazarus_paths.outputs.lazarus_dir }}/lcl/include \
             -dLCL -dLCLcocoa \
             NoiseGenerator.dpr
 
@@ -200,10 +225,10 @@ jobs:
       run: |
         cd "Demos/VU Meter"
         fpc -Fu../../Source \
-            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin \
-            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin/cocoa \
-            -Fu/usr/local/share/lazarus/components/lazutils/lib/x86_64-darwin \
-            -Fi/usr/local/share/lazarus/lcl/include \
+            -Fu${{ steps.lazarus_paths.outputs.lazarus_dir }}/lcl/units/${{ steps.arch.outputs.darwin_arch }} \
+            -Fu${{ steps.lazarus_paths.outputs.lazarus_dir }}/lcl/units/${{ steps.arch.outputs.darwin_arch }}/cocoa \
+            -Fu${{ steps.lazarus_paths.outputs.lazarus_dir }}/components/lazutils/lib/${{ steps.arch.outputs.darwin_arch }} \
+            -Fi${{ steps.lazarus_paths.outputs.lazarus_dir }}/lcl/include \
             -dLCL -dLCLcocoa \
             VUMeter.dpr
 
@@ -211,10 +236,10 @@ jobs:
       run: |
         cd "Demos/Effect Generator"
         fpc -Fu../../Source \
-            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin \
-            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin/cocoa \
-            -Fu/usr/local/share/lazarus/components/lazutils/lib/x86_64-darwin \
-            -Fi/usr/local/share/lazarus/lcl/include \
+            -Fu${{ steps.lazarus_paths.outputs.lazarus_dir }}/lcl/units/${{ steps.arch.outputs.darwin_arch }} \
+            -Fu${{ steps.lazarus_paths.outputs.lazarus_dir }}/lcl/units/${{ steps.arch.outputs.darwin_arch }}/cocoa \
+            -Fu${{ steps.lazarus_paths.outputs.lazarus_dir }}/components/lazutils/lib/${{ steps.arch.outputs.darwin_arch }} \
+            -Fi${{ steps.lazarus_paths.outputs.lazarus_dir }}/lcl/include \
             -dLCL -dLCLcocoa \
             EffectGenerator.dpr
 
