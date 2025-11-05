@@ -204,35 +204,26 @@ jobs:
         # Compile essential lazutils units in dependency order
         echo "Pre-compiling essential lazutils units..."
 
-        # Base units with minimal dependencies
-        /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
-          -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
-          lazutilsstrconsts.pas 2>&1 | head -20 || true
+        # List of units to compile (try both .pas and .pp extensions)
+        UNITS="lazutilsstrconsts lazutilities graphtype lazutf8 fileutil lconvencoding laztracer lazloggerbase lazlogger lazfreetype lazmethodlist lazfileutils"
 
-        /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
-          -Fulib/$DARWIN_ARCH \
-          -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
-          lazutilities.pas
-
-        /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
-          -Fulib/$DARWIN_ARCH \
-          -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
-          graphtype.pp
-
-        /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
-          -Fulib/$DARWIN_ARCH \
-          -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
-          lazutf8.pas
-
-        /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
-          -Fulib/$DARWIN_ARCH \
-          -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
-          fileutil.pas 2>&1 | head -50 || true
-
-        /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
-          -Fulib/$DARWIN_ARCH \
-          -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
-          lconvencoding.pas 2>&1 | head -50 || true
+        for unit in $UNITS; do
+          echo "Compiling $unit..."
+          # Try .pas first, then .pp
+          if [ -f "$unit.pas" ]; then
+            /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
+              -Fulib/$DARWIN_ARCH \
+              -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+              $unit.pas 2>&1 | grep -E "(Compiling|Fatal|Error)" | head -5 || true
+          elif [ -f "$unit.pp" ]; then
+            /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
+              -Fulib/$DARWIN_ARCH \
+              -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+              $unit.pp 2>&1 | grep -E "(Compiling|Fatal|Error)" | head -5 || true
+          else
+            echo "  Unit $unit not found"
+          fi
+        done
 
         echo "Lazutils units compiled, checking output..."
         ls -la lib/$DARWIN_ARCH/ | head -20
