@@ -361,11 +361,17 @@ jobs:
 
     - name: Install Lazarus LCL
       run: |
-        # Download Lazarus
-        curl -L -o lazarus.dmg "https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%203.0/Lazarus-3.0-0-x86_64-macosx.dmg/download"
-        hdiutil attach lazarus.dmg
-        sudo cp -R /Volumes/Lazarus/Lazarus.app /Applications/
-        hdiutil detach /Volumes/Lazarus
+        # Clone Lazarus source to get LCL units
+        git clone --depth 1 --branch lazarus_3_0 https://gitlab.com/freepascal.org/lazarus/lazarus.git /tmp/lazarus
+
+        # Build LCL for Cocoa
+        cd /tmp/lazarus
+        make lcl LCL_PLATFORM=cocoa
+
+        # Create application directory structure
+        sudo mkdir -p /Applications/Lazarus.app/Contents/Resources
+        sudo cp -R /tmp/lazarus/lcl /Applications/Lazarus.app/Contents/Resources/
+        sudo cp -R /tmp/lazarus/components /Applications/Lazarus.app/Contents/Resources/
 
     - name: Build demos
       run: |
@@ -377,6 +383,8 @@ jobs:
           fpc -Fu../../Source \
               -Fu/Applications/Lazarus.app/Contents/Resources/lcl/units/x86_64-darwin \
               -Fu/Applications/Lazarus.app/Contents/Resources/lcl/units/x86_64-darwin/cocoa \
+              -Fu/Applications/Lazarus.app/Contents/Resources/components/lazutils/lib/x86_64-darwin \
+              -Fi/Applications/Lazarus.app/Contents/Resources/lcl/include \
               -dLCL -dLCLcocoa \
               *.dpr || echo "Build failed for $demo_dir (may not have LCL support yet)"
           cd ../..
@@ -385,6 +393,7 @@ jobs:
         build_demo "Demos/Sine Generator"
         build_demo "Demos/Noise Generator"
         build_demo "Demos/VU Meter"
+        build_demo "Demos/Effect Generator"
       continue-on-error: true
 
     - name: Package release
