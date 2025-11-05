@@ -244,7 +244,7 @@ jobs:
         # Now build LCL which will find the lazutils units and packager
         cd /tmp/lazarus/lcl
         echo "Building LCL for Cocoa..."
-        make LCL_PLATFORM=cocoa PP=/opt/homebrew/bin/fpc OPT="-Fu/tmp/lazarus/packager/registration/units/$DARWIN_ARCH"
+        make LCL_PLATFORM=cocoa PP=/opt/homebrew/bin/fpc OPT="-Fu/tmp/lazarus/packager/registration/units/$DARWIN_ARCH -Fu/tmp/lazarus/components/lazutils/lib/$DARWIN_ARCH"
 
         # Create directory structure for easier path references
         sudo mkdir -p /usr/local/share/lazarus
