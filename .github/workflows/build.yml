@@ -156,64 +156,193 @@ jobs:
     - name: Display FPC version
       run: fpc -iV
 
+    - name: Detect architecture
+      id: arch
+      run: |
+        ARCH=$(uname -m)
+        if [ "$ARCH" = "arm64" ]; then
+          echo "darwin_arch=aarch64-darwin" >> $GITHUB_OUTPUT
+        else
+          echo "darwin_arch=x86_64-darwin" >> $GITHUB_OUTPUT
+        fi
+        echo "Detected architecture: $ARCH (using ${{ steps.arch.outputs.darwin_arch || 'aarch64-darwin' }})"
+
     - name: Install Lazarus (LCL only)
       run: |
-        # Clone Lazarus sources from GitLab (more reliable than SourceForge)
+        # Clone Lazarus sources from GitLab
         git clone --depth 1 --branch lazarus_3_0 https://gitlab.com/freepascal.org/lazarus/lazarus.git /tmp/lazarus
+        cd /tmp/lazarus
 
-        # Build LCL for macOS Cocoa
-        cd /tmp/lazarus/lcl
-        make LCL_PLATFORM=cocoa
+        # Detect architecture for proper paths
+        ARCH=$(uname -m)
+        if [ "$ARCH" = "arm64" ]; then
+          DARWIN_ARCH="aarch64-darwin"
+        else
+          DARWIN_ARCH="x86_64-darwin"
+        fi
+        echo "Building for architecture: $DARWIN_ARCH"
 
-        # Also build lazutils
+        # Find FPC installation and units
+        FPC_DIR=$(dirname $(dirname $(which fpc)))
+        FPC_VERSION=$(fpc -iV)
+        echo "FPC installation at: $FPC_DIR"
+        echo "FPC version: $FPC_VERSION"
+
+        # Locate FPC units directory (GraphType is in fcl-image)
+        FPC_UNITS_DIR="$FPC_DIR/lib/fpc/$FPC_VERSION/units/$DARWIN_ARCH"
+        echo "FPC units directory: $FPC_UNITS_DIR"
+
+        # LCL depends on several lazutils units that need to be compiled first
+        # We can't use the lazutils Makefile (needs LazarusPackageIntf),
+        # but we can compile the core units individually
+
         cd /tmp/lazarus/components/lazutils
-        make
+
+        # Create output directory
+        mkdir -p lib/$DARWIN_ARCH
+
+        # Compile essential lazutils units in dependency order
+        echo "Pre-compiling essential lazutils units..."
+
+        # List of units to compile (try both .pas and .pp extensions)
+        UNITS="lazutilsstrconsts lazutilities graphtype graphmath lazutf8 fileutil lconvencoding laztracer lazloggerbase lazlogger lazfreetype lazmethodlist lazfileutils lazversion lazconfigstorage dynqueue integerlist utf8process lazsysutils maps"
+
+        for unit in $UNITS; do
+          echo "Compiling $unit..."
+          # Try .pas first, then .pp
+          if [ -f "$unit.pas" ]; then
+            /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
+              -Fulib/$DARWIN_ARCH \
+              -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+              $unit.pas 2>&1 | grep -E "(Compiling|Fatal|Error)" | head -5 || true
+          elif [ -f "$unit.pp" ]; then
+            /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
+              -Fulib/$DARWIN_ARCH \
+              -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+              $unit.pp 2>&1 | grep -E "(Compiling|Fatal|Error)" | head -5 || true
+          else
+            echo "  Unit $unit not found"
+          fi
+        done
+
+        echo "Lazutils units compiled, checking output..."
+        ls -la lib/$DARWIN_ARCH/ | head -20
+
+        # Now build LCL which will find the lazutils units
+        cd /tmp/lazarus/lcl
+        echo "Building LCL for Cocoa..."
+        make LCL_PLATFORM=cocoa PP=/opt/homebrew/bin/fpc
 
         # Create directory structure for easier path references
         sudo mkdir -p /usr/local/share/lazarus
         sudo cp -R /tmp/lazarus/lcl /usr/local/share/lazarus/
         sudo cp -R /tmp/lazarus/components /usr/local/share/lazarus/
+        sudo cp -R /tmp/lazarus/packager /usr/local/share/lazarus/
 
     - name: Build Sine Generator
       run: |
+        ARCH=$(uname -m)
+        if [ "$ARCH" = "arm64" ]; then
+          DARWIN_ARCH="aarch64-darwin"
+        else
+          DARWIN_ARCH="x86_64-darwin"
+        fi
+
+        # Get FPC paths
+        FPC_DIR=$(dirname $(dirname $(which fpc)))
+        FPC_VERSION=$(fpc -iV)
+        FPC_UNITS_DIR="$FPC_DIR/lib/fpc/$FPC_VERSION/units/$DARWIN_ARCH"
+
         cd "Demos/Sine Generator"
         fpc -Fu../../Source \
-            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin \
-            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin/cocoa \
-            -Fu/usr/local/share/lazarus/components/lazutils/lib/x86_64-darwin \
+            -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH \
+            -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH/cocoa \
+            -Fu/usr/local/share/lazarus/components/lazutils/lib/$DARWIN_ARCH \
+            -Fu/usr/local/share/lazarus/components/freetype/lib/$DARWIN_ARCH \
+            -Fu$FPC_UNITS_DIR/fcl-image \
+            -Fu$FPC_UNITS_DIR/fcl-base \
+            -Fu$FPC_UNITS_DIR/rtl-objc \
             -Fi/usr/local/share/lazarus/lcl/include \
             -dLCL -dLCLcocoa \
             SineGenerator.dpr
 
     - name: Build Noise Generator
       run: |
+        ARCH=$(uname -m)
+        if [ "$ARCH" = "arm64" ]; then
+          DARWIN_ARCH="aarch64-darwin"
+        else
+          DARWIN_ARCH="x86_64-darwin"
+        fi
+
+        # Get FPC paths
+        FPC_DIR=$(dirname $(dirname $(which fpc)))
+        FPC_VERSION=$(fpc -iV)
+        FPC_UNITS_DIR="$FPC_DIR/lib/fpc/$FPC_VERSION/units/$DARWIN_ARCH"
+
         cd "Demos/Noise Generator"
         fpc -Fu../../Source \
-            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin \
-            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin/cocoa \
-            -Fu/usr/local/share/lazarus/components/lazutils/lib/x86_64-darwin \
+            -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH \
+            -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH/cocoa \
+            -Fu/usr/local/share/lazarus/components/lazutils/lib/$DARWIN_ARCH \
+            -Fu/usr/local/share/lazarus/components/freetype/lib/$DARWIN_ARCH \
+            -Fu$FPC_UNITS_DIR/fcl-image \
+            -Fu$FPC_UNITS_DIR/fcl-base \
+            -Fu$FPC_UNITS_DIR/rtl-objc \
             -Fi/usr/local/share/lazarus/lcl/include \
             -dLCL -dLCLcocoa \
             NoiseGenerator.dpr
 
     - name: Build VU Meter
       run: |
+        ARCH=$(uname -m)
+        if [ "$ARCH" = "arm64" ]; then
+          DARWIN_ARCH="aarch64-darwin"
+        else
+          DARWIN_ARCH="x86_64-darwin"
+        fi
+
+        # Get FPC paths
+        FPC_DIR=$(dirname $(dirname $(which fpc)))
+        FPC_VERSION=$(fpc -iV)
+        FPC_UNITS_DIR="$FPC_DIR/lib/fpc/$FPC_VERSION/units/$DARWIN_ARCH"
+
         cd "Demos/VU Meter"
         fpc -Fu../../Source \
-            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin \
-            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin/cocoa \
-            -Fu/usr/local/share/lazarus/components/lazutils/lib/x86_64-darwin \
+            -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH \
+            -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH/cocoa \
+            -Fu/usr/local/share/lazarus/components/lazutils/lib/$DARWIN_ARCH \
+            -Fu/usr/local/share/lazarus/components/freetype/lib/$DARWIN_ARCH \
+            -Fu$FPC_UNITS_DIR/fcl-image \
+            -Fu$FPC_UNITS_DIR/fcl-base \
+            -Fu$FPC_UNITS_DIR/rtl-objc \
             -Fi/usr/local/share/lazarus/lcl/include \
             -dLCL -dLCLcocoa \
             VUMeter.dpr
 
     - name: Build Effect Generator
       run: |
+        ARCH=$(uname -m)
+        if [ "$ARCH" = "arm64" ]; then
+          DARWIN_ARCH="aarch64-darwin"
+        else
+          DARWIN_ARCH="x86_64-darwin"
+        fi
+
+        # Get FPC paths
+        FPC_DIR=$(dirname $(dirname $(which fpc)))
+        FPC_VERSION=$(fpc -iV)
+        FPC_UNITS_DIR="$FPC_DIR/lib/fpc/$FPC_VERSION/units/$DARWIN_ARCH"
+
         cd "Demos/Effect Generator"
         fpc -Fu../../Source \
-            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin \
-            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin/cocoa \
-            -Fu/usr/local/share/lazarus/components/lazutils/lib/x86_64-darwin \
+            -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH \
+            -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH/cocoa \
+            -Fu/usr/local/share/lazarus/components/lazutils/lib/$DARWIN_ARCH \
+            -Fu/usr/local/share/lazarus/components/freetype/lib/$DARWIN_ARCH \
+            -Fu$FPC_UNITS_DIR/fcl-image \
+            -Fu$FPC_UNITS_DIR/fcl-base \
+            -Fu$FPC_UNITS_DIR/rtl-objc \
             -Fi/usr/local/share/lazarus/lcl/include \
             -dLCL -dLCLcocoa \
             EffectGenerator.dpr
