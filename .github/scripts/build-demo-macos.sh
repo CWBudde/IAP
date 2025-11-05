@@ -52,6 +52,7 @@ fpc -Fu../../Source \
     -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH \
     -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH/cocoa \
     -Fu/usr/local/share/lazarus/components/lazutils/lib/$DARWIN_ARCH \
+    -Fu/usr/local/share/lazarus/components/freetype/lib/$DARWIN_ARCH \
     -Fu$FPC_UNITS_DIR/fcl-image \
     -Fu$FPC_UNITS_DIR/fcl-base \
     -Fu$FPC_UNITS_DIR/rtl-objc \
