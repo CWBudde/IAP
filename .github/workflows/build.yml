@@ -182,37 +182,44 @@ jobs:
         fi
         echo "Building for architecture: $DARWIN_ARCH"
 
-        # First, build FPC packages (including fcl-image which contains GraphType)
-        cd packager
-        # Build registration units
-        make registration FPC=/opt/homebrew/bin/fpc
+        # Find FPC installation and units
+        FPC_DIR=$(dirname $(dirname $(which fpc)))
+        FPC_VERSION=$(fpc -iV)
+        echo "FPC installation at: $FPC_DIR"
+        echo "FPC version: $FPC_VERSION"
 
-        # Build LCL for macOS Cocoa
-        cd ../lcl
-        make LCL_PLATFORM=cocoa FPC=/opt/homebrew/bin/fpc
+        # Locate FPC units directory (GraphType is in fcl-image)
+        FPC_UNITS_DIR="$FPC_DIR/lib/fpc/$FPC_VERSION/units/$DARWIN_ARCH"
+        echo "FPC units directory: $FPC_UNITS_DIR"
 
-        # Build lazutils
-        cd ../components/lazutils
+        # Verify GraphType is available in FPC
+        echo "Checking for GraphType in FPC units..."
+        find "$FPC_UNITS_DIR" -name "graphtype.*" -o -name "GraphType.*" || echo "WARNING: GraphType not found"
+
+        # List fcl-image directory if it exists
+        if [ -d "$FPC_UNITS_DIR/fcl-image" ]; then
+          echo "Contents of fcl-image:"
+          ls -la "$FPC_UNITS_DIR/fcl-image/" | head -20
+        fi
+
+        # Build lazutils first (no GraphType dependency)
+        cd /tmp/lazarus/components/lazutils
         make FPC=/opt/homebrew/bin/fpc
 
         # Build freetype component (may be needed)
         cd ../freetype
         make FPC=/opt/homebrew/bin/fpc || true
 
+        # Build LCL for macOS Cocoa with FPC units path
+        cd /tmp/lazarus/lcl
+        make LCL_PLATFORM=cocoa FPC=/opt/homebrew/bin/fpc \
+          OPT="-Fu$FPC_UNITS_DIR/fcl-image -Fu$FPC_UNITS_DIR/fcl-base -Fu$FPC_UNITS_DIR/rtl-objc"
+
         # Create directory structure for easier path references
         sudo mkdir -p /usr/local/share/lazarus
         sudo cp -R /tmp/lazarus/lcl /usr/local/share/lazarus/
         sudo cp -R /tmp/lazarus/components /usr/local/share/lazarus/
         sudo cp -R /tmp/lazarus/packager /usr/local/share/lazarus/
-
-        # Verify GraphType is available
-        echo "Checking for GraphType unit..."
-        find /tmp/lazarus -name "graphtype.*" -o -name "GraphType.*" || echo "GraphType not found in Lazarus tree"
-
-        # Check FPC RTL for GraphType
-        FPC_DIR=$(dirname $(dirname $(which fpc)))
-        echo "FPC installation at: $FPC_DIR"
-        find "$FPC_DIR" -name "graphtype.*" -o -name "GraphType.*" || echo "GraphType not found in FPC installation"
 
     - name: Build Sine Generator
       run: |
@@ -223,12 +230,20 @@ jobs:
           DARWIN_ARCH="x86_64-darwin"
         fi
 
+        # Get FPC paths
+        FPC_DIR=$(dirname $(dirname $(which fpc)))
+        FPC_VERSION=$(fpc -iV)
+        FPC_UNITS_DIR="$FPC_DIR/lib/fpc/$FPC_VERSION/units/$DARWIN_ARCH"
+
         cd "Demos/Sine Generator"
         fpc -Fu../../Source \
             -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH \
             -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH/cocoa \
             -Fu/usr/local/share/lazarus/components/lazutils/lib/$DARWIN_ARCH \
             -Fu/usr/local/share/lazarus/components/freetype/lib/$DARWIN_ARCH \
+            -Fu$FPC_UNITS_DIR/fcl-image \
+            -Fu$FPC_UNITS_DIR/fcl-base \
+            -Fu$FPC_UNITS_DIR/rtl-objc \
             -Fi/usr/local/share/lazarus/lcl/include \
             -dLCL -dLCLcocoa \
             SineGenerator.dpr
@@ -242,12 +257,20 @@ jobs:
           DARWIN_ARCH="x86_64-darwin"
         fi
 
+        # Get FPC paths
+        FPC_DIR=$(dirname $(dirname $(which fpc)))
+        FPC_VERSION=$(fpc -iV)
+        FPC_UNITS_DIR="$FPC_DIR/lib/fpc/$FPC_VERSION/units/$DARWIN_ARCH"
+
         cd "Demos/Noise Generator"
         fpc -Fu../../Source \
             -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH \
             -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH/cocoa \
             -Fu/usr/local/share/lazarus/components/lazutils/lib/$DARWIN_ARCH \
             -Fu/usr/local/share/lazarus/components/freetype/lib/$DARWIN_ARCH \
+            -Fu$FPC_UNITS_DIR/fcl-image \
+            -Fu$FPC_UNITS_DIR/fcl-base \
+            -Fu$FPC_UNITS_DIR/rtl-objc \
             -Fi/usr/local/share/lazarus/lcl/include \
             -dLCL -dLCLcocoa \
             NoiseGenerator.dpr
@@ -261,12 +284,20 @@ jobs:
           DARWIN_ARCH="x86_64-darwin"
         fi
 
+        # Get FPC paths
+        FPC_DIR=$(dirname $(dirname $(which fpc)))
+        FPC_VERSION=$(fpc -iV)
+        FPC_UNITS_DIR="$FPC_DIR/lib/fpc/$FPC_VERSION/units/$DARWIN_ARCH"
+
         cd "Demos/VU Meter"
         fpc -Fu../../Source \
             -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH \
             -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH/cocoa \
             -Fu/usr/local/share/lazarus/components/lazutils/lib/$DARWIN_ARCH \
             -Fu/usr/local/share/lazarus/components/freetype/lib/$DARWIN_ARCH \
+            -Fu$FPC_UNITS_DIR/fcl-image \
+            -Fu$FPC_UNITS_DIR/fcl-base \
+            -Fu$FPC_UNITS_DIR/rtl-objc \
             -Fi/usr/local/share/lazarus/lcl/include \
             -dLCL -dLCLcocoa \
             VUMeter.dpr
@@ -280,12 +311,20 @@ jobs:
           DARWIN_ARCH="x86_64-darwin"
         fi
 
+        # Get FPC paths
+        FPC_DIR=$(dirname $(dirname $(which fpc)))
+        FPC_VERSION=$(fpc -iV)
+        FPC_UNITS_DIR="$FPC_DIR/lib/fpc/$FPC_VERSION/units/$DARWIN_ARCH"
+
         cd "Demos/Effect Generator"
         fpc -Fu../../Source \
             -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH \
             -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH/cocoa \
             -Fu/usr/local/share/lazarus/components/lazutils/lib/$DARWIN_ARCH \
             -Fu/usr/local/share/lazarus/components/freetype/lib/$DARWIN_ARCH \
+            -Fu$FPC_UNITS_DIR/fcl-image \
+            -Fu$FPC_UNITS_DIR/fcl-base \
+            -Fu$FPC_UNITS_DIR/rtl-objc \
             -Fi/usr/local/share/lazarus/lcl/include \
             -dLCL -dLCLcocoa \
             EffectGenerator.dpr
