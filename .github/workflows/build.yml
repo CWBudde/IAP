@@ -192,22 +192,21 @@ jobs:
         FPC_UNITS_DIR="$FPC_DIR/lib/fpc/$FPC_VERSION/units/$DARWIN_ARCH"
         echo "FPC units directory: $FPC_UNITS_DIR"
 
-        # GraphType is part of Lazarus LCL itself, located at lcl/graphtype.pp
-        # The issue is that alllclunits.pp tries to use GraphType before it's compiled
-        # Solution: manually compile the base units first
+        # GraphType is part of Lazarus LCL
+        # First, let's find where it actually is
+        cd /tmp/lazarus
 
+        echo "Searching for GraphType unit..."
+        find . -name "*graphtype*" -o -name "*GraphType*" | head -20
+
+        echo "Checking LCL directory structure..."
+        ls -la lcl/ | head -30
+
+        echo "Checking for interfaces directory..."
+        ls -la lcl/interfaces/ 2>/dev/null || echo "No interfaces directory"
+
+        # Try building just the interfaces/widgetset base first
         cd /tmp/lazarus/lcl
-
-        # Create output directory
-        mkdir -p units/$DARWIN_ARCH
-
-        # Manually compile GraphType and other base units first
-        echo "Pre-compiling base LCL units..."
-        /opt/homebrew/bin/fpc -FUunits/$DARWIN_ARCH \
-          -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
-          graphtype.pp
-
-        # Now build LCL with the standard Makefile
         echo "Building LCL for Cocoa..."
         make LCL_PLATFORM=cocoa PP=/opt/homebrew/bin/fpc
 
