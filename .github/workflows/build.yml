@@ -192,22 +192,52 @@ jobs:
         FPC_UNITS_DIR="$FPC_DIR/lib/fpc/$FPC_VERSION/units/$DARWIN_ARCH"
         echo "FPC units directory: $FPC_UNITS_DIR"
 
-        # GraphType is part of lazutils (components/lazutils/graphtype.pp)
-        # The LCL build expects it in components/lazutils/lib/aarch64-darwin
-        # We need to compile it before building LCL
+        # LCL depends on several lazutils units that need to be compiled first
+        # We can't use the lazutils Makefile (needs LazarusPackageIntf),
+        # but we can compile the core units individually
 
         cd /tmp/lazarus/components/lazutils
 
         # Create output directory
         mkdir -p lib/$DARWIN_ARCH
 
-        # Compile GraphType unit standalone
-        echo "Pre-compiling GraphType from lazutils..."
+        # Compile essential lazutils units in dependency order
+        echo "Pre-compiling essential lazutils units..."
+
+        # Base units with minimal dependencies
         /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
+          -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+          lazutilsstrconsts.pas 2>&1 | head -20 || true
+
+        /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
+          -Fulib/$DARWIN_ARCH \
+          -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+          lazutilities.pas
+
+        /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
+          -Fulib/$DARWIN_ARCH \
           -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
           graphtype.pp
 
-        # Now build LCL which will find GraphType
+        /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
+          -Fulib/$DARWIN_ARCH \
+          -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+          lazutf8.pas
+
+        /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
+          -Fulib/$DARWIN_ARCH \
+          -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+          fileutil.pas 2>&1 | head -50 || true
+
+        /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
+          -Fulib/$DARWIN_ARCH \
+          -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+          lconvencoding.pas 2>&1 | head -50 || true
+
+        echo "Lazutils units compiled, checking output..."
+        ls -la lib/$DARWIN_ARCH/ | head -20
+
+        # Now build LCL which will find the lazutils units
         cd /tmp/lazarus/lcl
         echo "Building LCL for Cocoa..."
         make LCL_PLATFORM=cocoa PP=/opt/homebrew/bin/fpc
