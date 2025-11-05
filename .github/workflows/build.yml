@@ -192,20 +192,22 @@ jobs:
         FPC_UNITS_DIR="$FPC_DIR/lib/fpc/$FPC_VERSION/units/$DARWIN_ARCH"
         echo "FPC units directory: $FPC_UNITS_DIR"
 
-        # GraphType is part of Lazarus LCL
-        # First, let's find where it actually is
-        cd /tmp/lazarus
+        # GraphType is part of lazutils (components/lazutils/graphtype.pp)
+        # The LCL build expects it in components/lazutils/lib/aarch64-darwin
+        # We need to compile it before building LCL
 
-        echo "Searching for GraphType unit..."
-        find . -name "*graphtype*" -o -name "*GraphType*" | head -20
+        cd /tmp/lazarus/components/lazutils
 
-        echo "Checking LCL directory structure..."
-        ls -la lcl/ | head -30
+        # Create output directory
+        mkdir -p lib/$DARWIN_ARCH
 
-        echo "Checking for interfaces directory..."
-        ls -la lcl/interfaces/ 2>/dev/null || echo "No interfaces directory"
+        # Compile GraphType unit standalone
+        echo "Pre-compiling GraphType from lazutils..."
+        /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
+          -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+          graphtype.pp
 
-        # Try building just the interfaces/widgetset base first
+        # Now build LCL which will find GraphType
         cd /tmp/lazarus/lcl
         echo "Building LCL for Cocoa..."
         make LCL_PLATFORM=cocoa PP=/opt/homebrew/bin/fpc
