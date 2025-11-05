@@ -211,15 +211,21 @@ jobs:
           echo "Compiling $unit..."
           # Try .pas first, then .pp
           if [ -f "$unit.pas" ]; then
-            /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
+            if ! /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
               -Fulib/$DARWIN_ARCH \
               -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
-              $unit.pas 2>&1 | grep -E "(Compiling|Fatal|Error)" | head -5 || true
+              $unit.pas 2>&1 | tee /tmp/fpc_$unit.log | grep -E "(Compiling|Fatal|Error|Warning)" | head -10; then
+              echo "  Warning: Compilation may have failed, check log"
+              cat /tmp/fpc_$unit.log || true
+            fi
           elif [ -f "$unit.pp" ]; then
-            /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
+            if ! /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
               -Fulib/$DARWIN_ARCH \
               -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
-              $unit.pp 2>&1 | grep -E "(Compiling|Fatal|Error)" | head -5 || true
+              $unit.pp 2>&1 | tee /tmp/fpc_$unit.log | grep -E "(Compiling|Fatal|Error|Warning)" | head -10; then
+              echo "  Warning: Compilation may have failed, check log"
+              cat /tmp/fpc_$unit.log || true
+            fi
           else
             echo "  Unit $unit not found"
           fi
@@ -227,6 +233,17 @@ jobs:
 
         echo "Lazutils units compiled, checking output..."
         ls -la lib/$DARWIN_ARCH/ | head -20
+
+        # Verify critical units were compiled
+        echo "Verifying critical units..."
+        for critical_unit in easylazfreetype lazfreetype graphtype; do
+          if [ -f "lib/$DARWIN_ARCH/$critical_unit.ppu" ]; then
+            echo "  ✓ $critical_unit.ppu found"
+          else
+            echo "  ✗ WARNING: $critical_unit.ppu NOT found!"
+            ls -la lib/$DARWIN_ARCH/ | grep -i "$critical_unit" || echo "  No files matching $critical_unit"
+          fi
+        done
 
         # Build packager registration components (needed for LazarusPackageIntf)
         cd /tmp/lazarus/packager/registration
@@ -244,7 +261,12 @@ jobs:
         # Now build LCL which will find the lazutils units and packager
         cd /tmp/lazarus/lcl
         echo "Building LCL for Cocoa..."
-        make LCL_PLATFORM=cocoa PP=/opt/homebrew/bin/fpc OPT="-Fu/tmp/lazarus/packager/registration/units/$DARWIN_ARCH -Fu/tmp/lazarus/components/lazutils/lib/$DARWIN_ARCH"
+
+        # Export paths for FPC to find units (used by Makefile)
+        export FPCOPT="-Fu/tmp/lazarus/packager/registration/units/$DARWIN_ARCH -Fu/tmp/lazarus/components/lazutils/lib/$DARWIN_ARCH"
+
+        # Build with both OPT parameter and environment variable
+        make LCL_PLATFORM=cocoa PP=/opt/homebrew/bin/fpc OPT="$FPCOPT"
 
         # Create directory structure for easier path references
         sudo mkdir -p /usr/local/share/lazarus
