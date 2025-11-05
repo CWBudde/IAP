@@ -194,12 +194,32 @@ jobs:
 
         # Verify GraphType is available in FPC
         echo "Checking for GraphType in FPC units..."
-        find "$FPC_UNITS_DIR" -name "graphtype.*" -o -name "GraphType.*" || echo "WARNING: GraphType not found"
+        find "$FPC_UNITS_DIR" -name "graphtype.*" -o -name "GraphType.*" || echo "WARNING: GraphType not found in FPC units"
 
         # List fcl-image directory if it exists
         if [ -d "$FPC_UNITS_DIR/fcl-image" ]; then
           echo "Contents of fcl-image:"
           ls -la "$FPC_UNITS_DIR/fcl-image/" | head -20
+        else
+          echo "ERROR: fcl-image directory not found at $FPC_UNITS_DIR/fcl-image"
+          echo "Homebrew FPC may not have fcl-image compiled for ARM64"
+          echo "Will attempt to build FPC packages from source..."
+
+          # Download and build FPC packages from source
+          cd /tmp
+          git clone --depth 1 --branch release_3_2_2 https://gitlab.com/freepascal.org/fpc/source.git fpc-source
+          cd fpc-source/packages
+
+          # Build fcl-image package which contains GraphType
+          cd fcl-image
+          echo "Building fcl-image package..."
+          make clean
+          make FPC=/opt/homebrew/bin/fpc
+          make install FPC=/opt/homebrew/bin/fpc INSTALL_PREFIX="$FPC_DIR"
+
+          # Verify GraphType is now available
+          echo "Checking for GraphType after building fcl-image..."
+          find "$FPC_UNITS_DIR" -name "graphtype.*" -o -name "GraphType.*" || echo "ERROR: Still can't find GraphType"
         fi
 
         # Build LCL for macOS Cocoa with FPC units path
