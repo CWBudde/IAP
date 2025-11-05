@@ -361,8 +361,23 @@ jobs:
 
     - name: Install Lazarus LCL
       run: |
-        # Download Lazarus
-        curl -L -o lazarus.dmg "https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%203.0/Lazarus-3.0-0-x86_64-macosx.dmg/download"
+        # Download Lazarus using wget (handles SourceForge better than curl)
+        brew install wget
+        wget --progress=dot:mega -O lazarus.dmg "https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%203.0/Lazarus-3.0-0-x86_64-macosx.dmg/download"
+
+        # Verify download size (should be much larger than 100KB)
+        SIZE=$(stat -f%z lazarus.dmg)
+        if [ $SIZE -lt 100000 ]; then
+          echo "Error: Downloaded file is too small ($SIZE bytes). Download may have failed."
+          file lazarus.dmg
+          head -n 20 lazarus.dmg
+          exit 1
+        fi
+
+        echo "Download successful. File size: $SIZE bytes"
+        file lazarus.dmg
+
+        # Mount and install Lazarus
         hdiutil attach lazarus.dmg
         sudo cp -R /Volumes/Lazarus/Lazarus.app /Applications/
         hdiutil detach /Volumes/Lazarus
