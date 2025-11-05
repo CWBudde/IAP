@@ -205,7 +205,7 @@ jobs:
         echo "Pre-compiling essential lazutils units..."
 
         # List of units to compile (try both .pas and .pp extensions)
-        UNITS="lazutilsstrconsts lazutilities graphtype graphmath lazutf8 fileutil lconvencoding laztracer lazloggerbase lazlogger lazfreetype lazmethodlist lazfileutils lazversion lazconfigstorage dynqueue integerlist utf8process lazsysutils"
+        UNITS="lazutilsstrconsts lazutilities graphtype graphmath lazutf8 fileutil lconvencoding laztracer lazloggerbase lazlogger lazfreetype lazmethodlist lazfileutils lazversion lazconfigstorage dynqueue integerlist utf8process lazsysutils maps"
 
         for unit in $UNITS; do
           echo "Compiling $unit..."
