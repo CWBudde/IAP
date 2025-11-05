@@ -192,41 +192,16 @@ jobs:
         FPC_UNITS_DIR="$FPC_DIR/lib/fpc/$FPC_VERSION/units/$DARWIN_ARCH"
         echo "FPC units directory: $FPC_UNITS_DIR"
 
-        # Verify GraphType is available in FPC
-        echo "Checking for GraphType in FPC units..."
-        find "$FPC_UNITS_DIR" -name "graphtype.*" -o -name "GraphType.*" || echo "WARNING: GraphType not found in FPC units"
+        # GraphType is part of Lazarus LCL itself, located at lcl/graphtype.pp
+        # The issue is the build order - we need to compile base units before alllclunits
 
-        # List fcl-image directory if it exists
-        if [ -d "$FPC_UNITS_DIR/fcl-image" ]; then
-          echo "Contents of fcl-image:"
-          ls -la "$FPC_UNITS_DIR/fcl-image/" | head -20
-        else
-          echo "ERROR: fcl-image directory not found at $FPC_UNITS_DIR/fcl-image"
-          echo "Homebrew FPC may not have fcl-image compiled for ARM64"
-          echo "Will attempt to build FPC packages from source..."
+        cd /tmp/lazarus
 
-          # Download and build FPC packages from source
-          cd /tmp
-          git clone --depth 1 --branch release_3_2_2 https://gitlab.com/freepascal.org/fpc/source.git fpc-source
-          cd fpc-source/packages
-
-          # Build fcl-image package which contains GraphType
-          cd fcl-image
-          echo "Building fcl-image package..."
-          make clean
-          make FPC=/opt/homebrew/bin/fpc
-          make install FPC=/opt/homebrew/bin/fpc INSTALL_PREFIX="$FPC_DIR"
-
-          # Verify GraphType is now available
-          echo "Checking for GraphType after building fcl-image..."
-          find "$FPC_UNITS_DIR" -name "graphtype.*" -o -name "GraphType.*" || echo "ERROR: Still can't find GraphType"
-        fi
-
-        # Build LCL for macOS Cocoa with FPC units path
-        # LCL build will automatically build lazutils as a dependency
-        cd /tmp/lazarus/lcl
-        make LCL_PLATFORM=cocoa FPC=/opt/homebrew/bin/fpc \
-          OPT="-Fu$FPC_UNITS_DIR/fcl-image -Fu$FPC_UNITS_DIR/fcl-base -Fu$FPC_UNITS_DIR/rtl-objc"
+        # Build using the top-level Lazarus Makefile which handles dependencies correctly
+        # This will build lazbuild, lcl, and components in the right order
+        echo "Building Lazarus (LCL and dependencies)..."
+        make clean LCL_PLATFORM=cocoa
+        make lcl LCL_PLATFORM=cocoa PP=/opt/homebrew/bin/fpc
 
         # Create directory structure for easier path references
         sudo mkdir -p /usr/local/share/lazarus
