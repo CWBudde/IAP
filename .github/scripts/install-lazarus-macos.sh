@@ -82,23 +82,45 @@ mkdir -p lib/$DARWIN_ARCH
 # Modern FPC already defines Int32/Int64 in system unit, causing redefinition errors
 echo "Applying compatibility patch to ttcalc.pas..."
 
-# Use a more robust patching method with awk
-if grep -q "^  Int32  = Longint;" ttcalc.pas 2>/dev/null; then
+# Check if file exists and show what we're looking for
+if [ ! -f "ttcalc.pas" ]; then
+  echo "  ✗ ERROR: ttcalc.pas not found!"
+  ls -la *.pas | head -5
+  exit 1
+fi
+
+# Look for the Int32 definition (allow flexible whitespace)
+if grep -q "Int32.*=.*Longint" ttcalc.pas; then
+  echo "  Found Int32 definition, applying patch..."
   cp ttcalc.pas ttcalc.pas.bak
-  awk '
-    /^  Int32  = Longint;/ {
-      print "{$IFNDEF FPC}"
-      print $0
-      getline
-      print $0
-      print "{$ENDIF}"
-      next
+
+  # Use perl for reliable multi-line replacement
+  # Wrap the Int32 and Word32 type definitions in {$IFNDEF FPC} ... {$ENDIF}
+  perl -i -pe '
+    BEGIN { $in_types = 0; }
+    if (/^  Int32  = Longint;/ && !$in_types) {
+      print "{$IFNDEF FPC}\n";
+      $in_types = 1;
     }
-    { print }
-  ' ttcalc.pas.bak > ttcalc.pas
-  echo "  ✓ Patch applied: wrapped Int32/Word32 definitions in {$IFNDEF FPC}"
+    if ($in_types && /^\s*$/) {
+      $_ = "{$ENDIF}\n" . $_;
+      $in_types = 0;
+    }
+  ' ttcalc.pas
+
+  if grep -q "IFNDEF FPC" ttcalc.pas; then
+    echo "  ✓ Patch applied successfully"
+    echo "  Patched section:"
+    grep -B 1 -A 10 "IFNDEF FPC" ttcalc.pas | head -13
+  else
+    echo "  ✗ ERROR: Patch failed to apply"
+    exit 1
+  fi
 else
-  echo "  ℹ Type definitions not found or already patched"
+  echo "  ✗ WARNING: Int32 definition not found in ttcalc.pas"
+  echo "  File contents around type definitions:"
+  grep -n "type\|Int32\|Word32" ttcalc.pas | head -15
+  exit 1
 fi
 
 # Compile freetype units
