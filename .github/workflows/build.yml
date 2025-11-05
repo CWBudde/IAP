@@ -202,15 +202,8 @@ jobs:
           ls -la "$FPC_UNITS_DIR/fcl-image/" | head -20
         fi
 
-        # Build lazutils first (no GraphType dependency)
-        cd /tmp/lazarus/components/lazutils
-        make FPC=/opt/homebrew/bin/fpc
-
-        # Build freetype component (may be needed)
-        cd ../freetype
-        make FPC=/opt/homebrew/bin/fpc || true
-
         # Build LCL for macOS Cocoa with FPC units path
+        # LCL build will automatically build lazutils as a dependency
         cd /tmp/lazarus/lcl
         make LCL_PLATFORM=cocoa FPC=/opt/homebrew/bin/fpc \
           OPT="-Fu$FPC_UNITS_DIR/fcl-image -Fu$FPC_UNITS_DIR/fcl-base -Fu$FPC_UNITS_DIR/rtl-objc"
