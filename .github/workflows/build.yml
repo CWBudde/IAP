@@ -228,10 +228,23 @@ jobs:
         echo "Lazutils units compiled, checking output..."
         ls -la lib/$DARWIN_ARCH/ | head -20
 
-        # Now build LCL which will find the lazutils units
+        # Build packager registration components (needed for LazarusPackageIntf)
+        cd /tmp/lazarus/packager/registration
+        echo "Building packager registration components..."
+        mkdir -p units/$DARWIN_ARCH
+        /opt/homebrew/bin/fpc -FUunits/$DARWIN_ARCH \
+          -Fuunits/$DARWIN_ARCH \
+          -Fu../../components/lazutils/lib/$DARWIN_ARCH \
+          -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+          lazaruspackageintf.pas 2>&1 | grep -E "(Compiling|Fatal|Error)" | head -10 || true
+
+        echo "Packager registration units compiled, checking output..."
+        ls -la units/$DARWIN_ARCH/ | head -10
+
+        # Now build LCL which will find the lazutils units and packager
         cd /tmp/lazarus/lcl
         echo "Building LCL for Cocoa..."
-        make LCL_PLATFORM=cocoa PP=/opt/homebrew/bin/fpc
+        make LCL_PLATFORM=cocoa PP=/opt/homebrew/bin/fpc OPT="-Fu/tmp/lazarus/packager/registration/units/$DARWIN_ARCH"
 
         # Create directory structure for easier path references
         sudo mkdir -p /usr/local/share/lazarus
