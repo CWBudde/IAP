@@ -146,9 +146,9 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Setup Lazarus
-      uses: gcarreno/setup-lazarus@v3
+      uses: sxmxta/lazarus@v1
       with:
-        lazarus-version: "3.0"
+        lazarus-version: "stable"
         with-cache: true
 
     - name: Install PortAudio
