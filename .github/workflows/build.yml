@@ -158,18 +158,74 @@ jobs:
 
     - name: Install Lazarus (LCL only)
       run: |
-        # Download and extract Lazarus for LCL units
-        curl -L -o lazarus.dmg "https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%203.0/Lazarus-3.0-0-x86_64-macosx.dmg/download"
-        hdiutil attach lazarus.dmg
-        sudo cp -R /Volumes/Lazarus/Lazarus.app /Applications/
-        hdiutil detach /Volumes/Lazarus
+        # Clone Lazarus sources from GitLab (more reliable than SourceForge)
+        git clone --depth 1 --branch lazarus_3_0 https://gitlab.com/freepascal.org/lazarus/lazarus.git /tmp/lazarus
+
+        # Build LCL for macOS Cocoa
+        cd /tmp/lazarus/lcl
+        make LCL_PLATFORM=cocoa
+
+        # Also build lazutils
+        cd /tmp/lazarus/components/lazutils
+        make
+
+        # Create directory structure for easier path references
+        sudo mkdir -p /usr/local/share/lazarus
+        sudo cp -R /tmp/lazarus/lcl /usr/local/share/lazarus/
+        sudo cp -R /tmp/lazarus/components /usr/local/share/lazarus/
 
     - name: Build Sine Generator
       run: |
         cd "Demos/Sine Generator"
         fpc -Fu../../Source \
-            -Fu/Applications/Lazarus.app/Contents/Resources/lcl/units/x86_64-darwin \
-            -Fu/Applications/Lazarus.app/Contents/Resources/lcl/units/x86_64-darwin/cocoa \
+            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin \
+            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin/cocoa \
+            -Fu/usr/local/share/lazarus/components/lazutils/lib/x86_64-darwin \
+            -Fi/usr/local/share/lazarus/lcl/include \
             -dLCL -dLCLcocoa \
-            SineGenerator.dpr || echo "Build may fail on macOS - continuing"
-      continue-on-error: true
+            SineGenerator.dpr
+
+    - name: Build Noise Generator
+      run: |
+        cd "Demos/Noise Generator"
+        fpc -Fu../../Source \
+            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin \
+            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin/cocoa \
+            -Fu/usr/local/share/lazarus/components/lazutils/lib/x86_64-darwin \
+            -Fi/usr/local/share/lazarus/lcl/include \
+            -dLCL -dLCLcocoa \
+            NoiseGenerator.dpr
+
+    - name: Build VU Meter
+      run: |
+        cd "Demos/VU Meter"
+        fpc -Fu../../Source \
+            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin \
+            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin/cocoa \
+            -Fu/usr/local/share/lazarus/components/lazutils/lib/x86_64-darwin \
+            -Fi/usr/local/share/lazarus/lcl/include \
+            -dLCL -dLCLcocoa \
+            VUMeter.dpr
+
+    - name: Build Effect Generator
+      run: |
+        cd "Demos/Effect Generator"
+        fpc -Fu../../Source \
+            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin \
+            -Fu/usr/local/share/lazarus/lcl/units/x86_64-darwin/cocoa \
+            -Fu/usr/local/share/lazarus/components/lazutils/lib/x86_64-darwin \
+            -Fi/usr/local/share/lazarus/lcl/include \
+            -dLCL -dLCLcocoa \
+            EffectGenerator.dpr
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: macos-binaries
+        path: |
+          Demos/*/SineGenerator
+          Demos/*/NoiseGenerator
+          Demos/*/VUMeter
+          Demos/*/EffectGenerator
+        retention-days: 7
