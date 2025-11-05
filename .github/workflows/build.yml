@@ -246,44 +246,10 @@ jobs:
           fi
         done
 
-        # Build freetype component (contains easylazfreetype and related units)
-        cd /tmp/lazarus/components/freetype
-        echo "Building freetype component..."
-        mkdir -p lib/$DARWIN_ARCH
-
-        # List freetype units
-        echo "Freetype source files:"
-        ls -la *.pas *.pp 2>/dev/null | head -10 || echo "No source files found"
-
-        # Compile freetype units
-        FREETYPE_UNITS="easylazfreetype lazfreetype"
-        for unit in $FREETYPE_UNITS; do
-          echo "Compiling freetype unit: $unit..."
-          if [ -f "$unit.pas" ]; then
-            /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
-              -Fulib/$DARWIN_ARCH \
-              -Fu../../components/lazutils/lib/$DARWIN_ARCH \
-              -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
-              $unit.pas 2>&1 | tee /tmp/fpc_freetype_$unit.log | grep -E "(Compiling|Fatal|Error|Warning)" | head -10
-          elif [ -f "$unit.pp" ]; then
-            /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
-              -Fulib/$DARWIN_ARCH \
-              -Fu../../components/lazutils/lib/$DARWIN_ARCH \
-              -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
-              $unit.pp 2>&1 | tee /tmp/fpc_freetype_$unit.log | grep -E "(Compiling|Fatal|Error|Warning)" | head -10
-          else
-            echo "  Unit $unit not found in freetype component"
-          fi
-        done
-
-        echo "Verifying freetype units..."
-        for unit in $FREETYPE_UNITS; do
-          if [ -f "lib/$DARWIN_ARCH/$unit.ppu" ]; then
-            echo "  ✓ $unit.ppu found"
-          else
-            echo "  ✗ WARNING: $unit.ppu NOT found!"
-          fi
-        done
+        # Note: Freetype component compilation skipped - not required by IAP demos
+        # The ttcalc.pas file in freetype has compatibility issues with macOS FPC
+        # that cause syntax errors. Since the IAP demos don't use freetype,
+        # we can safely skip this component.
 
         # Build packager registration components (needed for LazarusPackageIntf)
         cd /tmp/lazarus/packager/registration
@@ -303,7 +269,7 @@ jobs:
         echo "Building LCL for Cocoa..."
 
         # Export paths for FPC to find units (used by Makefile)
-        export FPCOPT="-Fu/tmp/lazarus/packager/registration/units/$DARWIN_ARCH -Fu/tmp/lazarus/components/lazutils/lib/$DARWIN_ARCH -Fu/tmp/lazarus/components/freetype/lib/$DARWIN_ARCH"
+        export FPCOPT="-Fu/tmp/lazarus/packager/registration/units/$DARWIN_ARCH -Fu/tmp/lazarus/components/lazutils/lib/$DARWIN_ARCH"
 
         # Build with both OPT parameter and environment variable
         make LCL_PLATFORM=cocoa PP=/opt/homebrew/bin/fpc OPT="$FPCOPT"
@@ -333,7 +299,6 @@ jobs:
             -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH \
             -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH/cocoa \
             -Fu/usr/local/share/lazarus/components/lazutils/lib/$DARWIN_ARCH \
-            -Fu/usr/local/share/lazarus/components/freetype/lib/$DARWIN_ARCH \
             -Fu$FPC_UNITS_DIR/fcl-image \
             -Fu$FPC_UNITS_DIR/fcl-base \
             -Fu$FPC_UNITS_DIR/rtl-objc \
@@ -360,7 +325,6 @@ jobs:
             -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH \
             -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH/cocoa \
             -Fu/usr/local/share/lazarus/components/lazutils/lib/$DARWIN_ARCH \
-            -Fu/usr/local/share/lazarus/components/freetype/lib/$DARWIN_ARCH \
             -Fu$FPC_UNITS_DIR/fcl-image \
             -Fu$FPC_UNITS_DIR/fcl-base \
             -Fu$FPC_UNITS_DIR/rtl-objc \
@@ -387,7 +351,6 @@ jobs:
             -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH \
             -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH/cocoa \
             -Fu/usr/local/share/lazarus/components/lazutils/lib/$DARWIN_ARCH \
-            -Fu/usr/local/share/lazarus/components/freetype/lib/$DARWIN_ARCH \
             -Fu$FPC_UNITS_DIR/fcl-image \
             -Fu$FPC_UNITS_DIR/fcl-base \
             -Fu$FPC_UNITS_DIR/rtl-objc \
@@ -414,7 +377,6 @@ jobs:
             -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH \
             -Fu/usr/local/share/lazarus/lcl/units/$DARWIN_ARCH/cocoa \
             -Fu/usr/local/share/lazarus/components/lazutils/lib/$DARWIN_ARCH \
-            -Fu/usr/local/share/lazarus/components/freetype/lib/$DARWIN_ARCH \
             -Fu$FPC_UNITS_DIR/fcl-image \
             -Fu$FPC_UNITS_DIR/fcl-base \
             -Fu$FPC_UNITS_DIR/rtl-objc \
