@@ -139,16 +139,16 @@ jobs:
 
   build-macos:
     name: Build on macOS (FPC)
-    runs-on: macos-latest
+    runs-on: macos-13  # Use Intel-based runner for better Lazarus compatibility
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Setup Lazarus
-      uses: sxmxta/lazarus@v1
+      uses: gcarreno/setup-lazarus@v3
       with:
-        lazarus-version: "stable"
+        lazarus-version: "3.0"
         with-cache: true
 
     - name: Install PortAudio
