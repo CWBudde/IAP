@@ -228,7 +228,40 @@ jobs:
         echo "Lazutils units compiled, checking output..."
         ls -la lib/$DARWIN_ARCH/ | head -20
 
-        # Now build LCL which will find the lazutils units
+        # Now compile freetype component (needed by LCL)
+        cd /tmp/lazarus/components/freetype
+        echo "Pre-compiling freetype component units..."
+
+        # Create output directory
+        mkdir -p lib/$DARWIN_ARCH
+
+        # Compile freetype units in dependency order
+        FREETYPE_UNITS="easylazfreetype ttypes tttables ttobjs ttload ttcache ttcalc ttinterp ttfile ttmemory ttprofile"
+
+        for unit in $FREETYPE_UNITS; do
+          echo "Compiling $unit..."
+          # Try .pas first, then .pp
+          if [ -f "$unit.pas" ]; then
+            /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
+              -Fulib/$DARWIN_ARCH \
+              -Fu/tmp/lazarus/components/lazutils/lib/$DARWIN_ARCH \
+              -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+              $unit.pas 2>&1 | grep -E "(Compiling|Fatal|Error)" | head -5 || true
+          elif [ -f "$unit.pp" ]; then
+            /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
+              -Fulib/$DARWIN_ARCH \
+              -Fu/tmp/lazarus/components/lazutils/lib/$DARWIN_ARCH \
+              -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+              $unit.pp 2>&1 | grep -E "(Compiling|Fatal|Error)" | head -5 || true
+          else
+            echo "  Unit $unit not found"
+          fi
+        done
+
+        echo "Freetype units compiled, checking output..."
+        ls -la lib/$DARWIN_ARCH/ | head -20
+
+        # Now build LCL which will find the lazutils and freetype units
         cd /tmp/lazarus/lcl
         echo "Building LCL for Cocoa..."
         make LCL_PLATFORM=cocoa PP=/opt/homebrew/bin/fpc
