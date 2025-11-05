@@ -72,11 +72,64 @@ for critical_unit in graphtype lazutf8 fileutil; do
 done
 
 # ============================================================================
-# Note: Freetype component compilation skipped
+# Build freetype component with compatibility patch
 # ============================================================================
-# The ttcalc.pas file in freetype has compatibility issues with macOS FPC
-# that cause syntax errors. Since the IAP demos don't use freetype,
-# we can safely skip this component.
+echo "==> Building freetype component..."
+cd /tmp/lazarus/components/freetype
+mkdir -p lib/$DARWIN_ARCH
+
+# Patch ttcalc.pas for FPC 3.2.2+ compatibility
+# Modern FPC already defines Int32/Int64 in system unit, causing redefinition errors
+echo "Applying compatibility patch to ttcalc.pas..."
+
+# Use a more robust patching method with awk
+if grep -q "^  Int32  = Longint;" ttcalc.pas 2>/dev/null; then
+  cp ttcalc.pas ttcalc.pas.bak
+  awk '
+    /^  Int32  = Longint;/ {
+      print "{$IFNDEF FPC}"
+      print $0
+      getline
+      print $0
+      print "{$ENDIF}"
+      next
+    }
+    { print }
+  ' ttcalc.pas.bak > ttcalc.pas
+  echo "  ✓ Patch applied: wrapped Int32/Word32 definitions in {$IFNDEF FPC}"
+else
+  echo "  ℹ Type definitions not found or already patched"
+fi
+
+# Compile freetype units
+FREETYPE_UNITS="easylazfreetype lazfreetype"
+for unit in $FREETYPE_UNITS; do
+  echo "  Compiling $unit..."
+  if [ -f "$unit.pas" ]; then
+    /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
+      -Fulib/$DARWIN_ARCH \
+      -Fu../../components/lazutils/lib/$DARWIN_ARCH \
+      -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+      $unit.pas 2>&1 | grep -E "(Compiling|Fatal|Error|Warning)" | head -10 || true
+  elif [ -f "$unit.pp" ]; then
+    /opt/homebrew/bin/fpc -FUlib/$DARWIN_ARCH \
+      -Fulib/$DARWIN_ARCH \
+      -Fu../../components/lazutils/lib/$DARWIN_ARCH \
+      -XR/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+      $unit.pp 2>&1 | grep -E "(Compiling|Fatal|Error|Warning)" | head -10 || true
+  else
+    echo "    Warning: Unit $unit not found"
+  fi
+done
+
+echo "Verifying freetype units..."
+for unit in $FREETYPE_UNITS; do
+  if [ -f "lib/$DARWIN_ARCH/$unit.ppu" ]; then
+    echo "  ✓ $unit.ppu found"
+  else
+    echo "  ✗ WARNING: $unit.ppu NOT found!"
+  fi
+done
 
 # ============================================================================
 # Build packager registration components (needed for LazarusPackageIntf)
@@ -100,7 +153,7 @@ echo "==> Building LCL for Cocoa..."
 cd /tmp/lazarus/lcl
 
 # Export paths for FPC to find units (used by Makefile)
-export FPCOPT="-Fu/tmp/lazarus/packager/registration/units/$DARWIN_ARCH -Fu/tmp/lazarus/components/lazutils/lib/$DARWIN_ARCH"
+export FPCOPT="-Fu/tmp/lazarus/packager/registration/units/$DARWIN_ARCH -Fu/tmp/lazarus/components/lazutils/lib/$DARWIN_ARCH -Fu/tmp/lazarus/components/freetype/lib/$DARWIN_ARCH"
 
 # Build with both OPT parameter and environment variable
 make LCL_PLATFORM=cocoa PP=/opt/homebrew/bin/fpc OPT="$FPCOPT"
