@@ -144,6 +144,9 @@ if grep -qF '{$IFNDEF FPC}' ttcalc.pas; then
   echo "  ✓ Verified: Type definitions wrapped in {$IFNDEF FPC}"
   echo "  Patched section:"
   grep -F '{$IFNDEF FPC}' -A 8 ttcalc.pas | head -11
+  echo ""
+  echo "  Showing lines 65-75 (where Order64 function is declared):"
+  sed -n '65,75p' ttcalc.pas | cat -n
 else
   echo "  ✗ ERROR: Patch verification failed"
   echo "  File does not contain {$IFNDEF FPC} directive"
