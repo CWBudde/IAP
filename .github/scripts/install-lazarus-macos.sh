@@ -105,7 +105,7 @@ if [ -f "$PATCH_FILE" ]; then
     cat /tmp/patch.log | head -5
   else
     # Patch failed, check if already applied
-    if grep -q "{$IFNDEF FPC}" ttcalc.pas; then
+    if grep -qF '{$IFNDEF FPC}' ttcalc.pas; then
       echo "  ℹ Patch already applied (file contains IFNDEF FPC directives)"
     else
       # Really failed
@@ -124,12 +124,15 @@ else
 fi
 
 # Verify patch was applied
-if grep -q "{$IFNDEF FPC}" ttcalc.pas; then
+if grep -qF '{$IFNDEF FPC}' ttcalc.pas; then
   echo "  ✓ Verified: Type definitions wrapped in {$IFNDEF FPC}"
   echo "  Patched section:"
-  grep -B 1 -A 8 "{$IFNDEF FPC}" ttcalc.pas | head -11
+  grep -F '{$IFNDEF FPC}' -A 8 ttcalc.pas | head -11
 else
   echo "  ✗ ERROR: Patch verification failed"
+  echo "  File does not contain {$IFNDEF FPC} directive"
+  echo "  Showing lines 45-60 of ttcalc.pas:"
+  sed -n '45,60p' ttcalc.pas
   exit 1
 fi
 
