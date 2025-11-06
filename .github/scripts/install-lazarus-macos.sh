@@ -76,11 +76,27 @@ for critical_unit in graphtype lazutf8 fileutil; do
   fi
 done
 
+echo "Lazutils build completed successfully"
+echo "Current directory: $(pwd)"
+
 # ============================================================================
 # Build freetype component with compatibility patch
 # ============================================================================
 echo "==> Building freetype component..."
-cd /tmp/lazarus/components/freetype
+
+# Check if freetype directory exists
+if [ ! -d "/tmp/lazarus/components/freetype" ]; then
+  echo "  ✗ ERROR: /tmp/lazarus/components/freetype directory not found!"
+  echo "  Available components:"
+  ls -la /tmp/lazarus/components/ | head -10
+  exit 1
+fi
+
+cd /tmp/lazarus/components/freetype || {
+  echo "  ✗ ERROR: Failed to cd to /tmp/lazarus/components/freetype"
+  exit 1
+}
+
 mkdir -p lib/$DARWIN_ARCH
 
 # Patch ttcalc.pas for FPC 3.2.2+ compatibility
