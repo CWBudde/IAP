@@ -121,8 +121,8 @@ if [ -f "$PATCH_FILE" ]; then
     cat /tmp/patch.log | head -5
   else
     # Patch failed, check if already applied
-    if grep -qF '{$IFNDEF FPC}' ttcalc.pas; then
-      echo "  ℹ Patch already applied (file contains IFNDEF FPC directives)"
+    if grep -q 'FPC_FULLVERSION' ttcalc.pas; then
+      echo "  ℹ Patch already applied (file contains FPC_FULLVERSION check)"
     else
       # Really failed
       echo "  ✗ ERROR: Patch failed to apply"
@@ -140,16 +140,16 @@ else
 fi
 
 # Verify patch was applied
-if grep -qF '{$IFNDEF FPC}' ttcalc.pas; then
-  echo "  ✓ Verified: Type definitions wrapped in {$IFNDEF FPC}"
+if grep -q 'FPC_FULLVERSION' ttcalc.pas; then
+  echo "  ✓ Verified: Type definitions conditionally defined for FPC version"
   echo "  Patched section:"
-  grep -F '{$IFNDEF FPC}' -A 8 ttcalc.pas | head -11
+  sed -n '48,60p' ttcalc.pas
   echo ""
   echo "  Showing lines 65-75 (where Order64 function is declared):"
   sed -n '65,75p' ttcalc.pas | cat -n
 else
   echo "  ✗ ERROR: Patch verification failed"
-  echo "  File does not contain {$IFNDEF FPC} directive"
+  echo "  File does not contain FPC_FULLVERSION check"
   echo "  Showing lines 45-60 of ttcalc.pas:"
   sed -n '45,60p' ttcalc.pas
   exit 1
