@@ -5,7 +5,12 @@ set -e
 # This script compiles the Lazarus Component Library (LCL) from source for Cocoa
 # Usage: ./install-lazarus-macos.sh
 
+# Save the initial working directory for accessing patch files
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
 echo "==> Installing Lazarus LCL for macOS..."
+echo "Project root: $PROJECT_ROOT"
 
 # Detect architecture for proper paths
 ARCH=$(uname -m)
@@ -82,42 +87,42 @@ mkdir -p lib/$DARWIN_ARCH
 # Modern FPC already defines Int32/Int64 in system unit, causing redefinition errors
 echo "Applying compatibility patch to ttcalc.pas..."
 
-# Check if file exists and show what we're looking for
+# Check if file exists
 if [ ! -f "ttcalc.pas" ]; then
   echo "  ✗ ERROR: ttcalc.pas not found!"
   ls -la *.pas | head -5
   exit 1
 fi
 
-# Look for the Int32 definition (allow flexible whitespace)
-if grep -q "Int32.*=.*Longint" ttcalc.pas; then
-  echo "  Found Int32 definition, applying patch..."
-  cp ttcalc.pas ttcalc.pas.bak
-
-  # Use sed with explicit line matching for the multi-line Word32 comment block
-  # Insert {$IFNDEF FPC} before Int32 line
-  # Insert {$ENDIF} after the last line of Word32 comment (contains "31 bits")
-  sed -i.tmp \
-    -e '/^  Int32  = Longint;/i\
-{$IFNDEF FPC}' \
-    -e '/As cardinals are only 31 bits !!/a\
-{$ENDIF}' \
-    ttcalc.pas
-
-  if grep -q "IFNDEF FPC" ttcalc.pas; then
+# Apply the patch file from repository
+PATCH_FILE="$PROJECT_ROOT/.github/patches/ttcalc-fpc-types.patch"
+if [ -f "$PATCH_FILE" ]; then
+  echo "  Applying patch from $PATCH_FILE..."
+  if patch -p0 --forward --batch < "$PATCH_FILE" 2>&1 | tee /tmp/patch.log | grep -v "Hunk"; then
     echo "  ✓ Patch applied successfully"
-    echo "  Patched section:"
-    grep -B 1 -A 10 "IFNDEF FPC" ttcalc.pas | head -13
   else
-    echo "  ✗ ERROR: Patch failed to apply"
-    echo "  Showing type definitions:"
-    grep -B 2 -A 8 "Int32.*Longint" ttcalc.pas | head -12
-    exit 1
+    # Check if already patched
+    if grep -q "{$IFNDEF FPC}" ttcalc.pas; then
+      echo "  ℹ Patch already applied (file contains IFNDEF FPC)"
+    else
+      echo "  ✗ ERROR: Patch failed to apply"
+      echo "  Patch output:"
+      cat /tmp/patch.log
+      exit 1
+    fi
   fi
 else
-  echo "  ✗ WARNING: Int32 definition not found in ttcalc.pas"
-  echo "  File contents around type definitions:"
-  grep -n "type\|Int32\|Word32" ttcalc.pas | head -15
+  echo "  ✗ ERROR: Patch file not found: $PATCH_FILE"
+  exit 1
+fi
+
+# Verify patch was applied
+if grep -q "{$IFNDEF FPC}" ttcalc.pas; then
+  echo "  ✓ Verified: Type definitions wrapped in {$IFNDEF FPC}"
+  echo "  Patched section:"
+  grep -B 1 -A 8 "{$IFNDEF FPC}" ttcalc.pas | head -11
+else
+  echo "  ✗ ERROR: Patch verification failed"
   exit 1
 fi
 
