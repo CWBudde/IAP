@@ -174,13 +174,28 @@ for unit in $FREETYPE_UNITS; do
 done
 
 echo "Verifying freetype units..."
+FREETYPE_SUCCESS=true
 for unit in $FREETYPE_UNITS; do
   if [ -f "lib/$DARWIN_ARCH/$unit.ppu" ]; then
     echo "  ✓ $unit.ppu found"
   else
     echo "  ✗ WARNING: $unit.ppu NOT found!"
+    FREETYPE_SUCCESS=false
   fi
 done
+
+if [ "$FREETYPE_SUCCESS" = "true" ]; then
+  echo ""
+  echo "================================================================"
+  echo "✓✓✓ FREETYPE BUILD SUCCESSFUL ✓✓✓"
+  echo "================================================================"
+else
+  echo ""
+  echo "================================================================"
+  echo "✗✗✗ FREETYPE BUILD FAILED - LCL compilation will fail ✗✗✗"
+  echo "================================================================"
+  exit 1
+fi
 
 # ============================================================================
 # Build packager registration components (needed for LazarusPackageIntf)
@@ -221,3 +236,25 @@ sudo cp -R /tmp/lazarus/packager /usr/local/share/lazarus/
 echo "==> Lazarus LCL installation complete!"
 echo "    LCL units: /usr/local/share/lazarus/lcl/units/$DARWIN_ARCH"
 echo "    Lazutils: /usr/local/share/lazarus/components/lazutils/lib/$DARWIN_ARCH"
+echo "    Freetype: /usr/local/share/lazarus/components/freetype/lib/$DARWIN_ARCH"
+
+echo ""
+echo "===================================================================="
+echo "INSTALLATION SUMMARY"
+echo "===================================================================="
+echo "Architecture: $DARWIN_ARCH"
+echo ""
+echo "Lazutils units:"
+ls -1 /usr/local/share/lazarus/components/lazutils/lib/$DARWIN_ARCH/*.ppu 2>/dev/null | wc -l | xargs echo "  Total:"
+echo ""
+echo "Freetype units:"
+if [ -d "/usr/local/share/lazarus/components/freetype/lib/$DARWIN_ARCH" ]; then
+  ls -1 /usr/local/share/lazarus/components/freetype/lib/$DARWIN_ARCH/*.ppu 2>/dev/null | wc -l | xargs echo "  Total:"
+  ls -1 /usr/local/share/lazarus/components/freetype/lib/$DARWIN_ARCH/*.ppu 2>/dev/null || echo "  No .ppu files found"
+else
+  echo "  Directory does not exist!"
+fi
+echo ""
+echo "LCL units:"
+ls -1 /usr/local/share/lazarus/lcl/units/$DARWIN_ARCH/*.ppu 2>/dev/null | wc -l | xargs echo "  Total:"
+echo "===================================================================="
