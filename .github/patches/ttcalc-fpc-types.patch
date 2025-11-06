@@ -1,0 +1,16 @@
+--- ttcalc.pas.orig	2024-01-01 00:00:00.000000000 +0000
++++ ttcalc.pas	2024-01-01 00:00:00.000000000 +0000
+@@ -48,10 +48,13 @@
+   Int16  = SmallInt;
+   Word16 = Word;               (* 16-bits unsigned *)
+ {$ENDIF}
++{$IF NOT (DEFINED(FPC) AND (FPC_FULLVERSION >= 30200))}
++  (* FPC 3.2.0+ has Int32 as a built-in type, so skip definition *)
+   Int32  = Longint;            (* 32 bits integer  *)
+
+   Word32 = Cardinal;           (* 32 bits 'unsigned'. Note that there's *)
+                                (* no unsigned long in Pascal..          *)
+                                (* As cardinals are only 31 bits !!      *)
++{$ENDIF}
+
+ // No need to define our own type, just use the build-in one
