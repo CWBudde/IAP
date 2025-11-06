@@ -98,16 +98,23 @@ fi
 PATCH_FILE="$PROJECT_ROOT/.github/patches/ttcalc-fpc-types.patch"
 if [ -f "$PATCH_FILE" ]; then
   echo "  Applying patch from $PATCH_FILE..."
-  if patch -p0 --forward --batch < "$PATCH_FILE" 2>&1 | tee /tmp/patch.log | grep -v "Hunk"; then
+
+  # Try to apply the patch, capture exit code
+  if patch -p0 --forward --batch < "$PATCH_FILE" > /tmp/patch.log 2>&1; then
     echo "  ✓ Patch applied successfully"
+    cat /tmp/patch.log | head -5
   else
-    # Check if already patched
+    # Patch failed, check if already applied
     if grep -q "{$IFNDEF FPC}" ttcalc.pas; then
-      echo "  ℹ Patch already applied (file contains IFNDEF FPC)"
+      echo "  ℹ Patch already applied (file contains IFNDEF FPC directives)"
     else
+      # Really failed
       echo "  ✗ ERROR: Patch failed to apply"
       echo "  Patch output:"
       cat /tmp/patch.log
+      echo ""
+      echo "  Showing ttcalc.pas around line 50:"
+      sed -n '45,60p' ttcalc.pas
       exit 1
     fi
   fi
