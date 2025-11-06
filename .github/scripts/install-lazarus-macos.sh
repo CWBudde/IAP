@@ -94,19 +94,15 @@ if grep -q "Int32.*=.*Longint" ttcalc.pas; then
   echo "  Found Int32 definition, applying patch..."
   cp ttcalc.pas ttcalc.pas.bak
 
-  # Use perl for reliable multi-line replacement
-  # Wrap the Int32 and Word32 type definitions in {$IFNDEF FPC} ... {$ENDIF}
-  perl -i -pe '
-    BEGIN { $in_types = 0; }
-    if (/^  Int32  = Longint;/ && !$in_types) {
-      print "{$IFNDEF FPC}\n";
-      $in_types = 1;
-    }
-    if ($in_types && /^\s*$/) {
-      $_ = "{$ENDIF}\n" . $_;
-      $in_types = 0;
-    }
-  ' ttcalc.pas
+  # Use sed with explicit line matching for the multi-line Word32 comment block
+  # Insert {$IFNDEF FPC} before Int32 line
+  # Insert {$ENDIF} after the last line of Word32 comment (contains "31 bits")
+  sed -i.tmp \
+    -e '/^  Int32  = Longint;/i\
+{$IFNDEF FPC}' \
+    -e '/As cardinals are only 31 bits !!/a\
+{$ENDIF}' \
+    ttcalc.pas
 
   if grep -q "IFNDEF FPC" ttcalc.pas; then
     echo "  ✓ Patch applied successfully"
@@ -114,6 +110,8 @@ if grep -q "Int32.*=.*Longint" ttcalc.pas; then
     grep -B 1 -A 10 "IFNDEF FPC" ttcalc.pas | head -13
   else
     echo "  ✗ ERROR: Patch failed to apply"
+    echo "  Showing type definitions:"
+    grep -B 2 -A 8 "Int32.*Longint" ttcalc.pas | head -12
     exit 1
   fi
 else
