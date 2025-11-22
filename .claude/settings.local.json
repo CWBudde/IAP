@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git log:*)",
+      "Bash(cat:*)",
+      "Bash(\"e:/Public/IAP/.github/patches/ttcalc-fpc-types.patch\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

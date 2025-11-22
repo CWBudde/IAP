@@ -1,16 +1,22 @@
---- ttcalc.pas.orig	2024-01-01 00:00:00.000000000 +0000
-+++ ttcalc.pas	2024-01-01 00:00:00.000000000 +0000
-@@ -48,10 +48,13 @@
+--- ttcalc.pas.orig	2025-11-22 04:10:09.804176800 +0100
++++ ttcalc.pas	2025-11-22 04:10:29.477064700 +0100
+@@ -49,11 +49,18 @@
    Int16  = SmallInt;
    Word16 = Word;               (* 16-bits unsigned *)
  {$ENDIF}
-+{$IF NOT (DEFINED(FPC) AND (FPC_FULLVERSION >= 30200))}
-+  (* FPC 3.2.0+ has Int32 as a built-in type, so skip definition *)
++{$IF DEFINED(FPC) AND (FPC_FULLVERSION >= 30200)}
++  (* FPC 3.2.0+ has Int32, Word32, Int64 as built-in types *)
++  (* Use type aliases to avoid redefinition errors *)
++  Int32  = System.Int32;
++  Word32 = System.UInt32;
++{$ELSE}
++  (* For older FPC or other compilers, define the types *)
    Int32  = Longint;            (* 32 bits integer  *)
-
+-
    Word32 = Cardinal;           (* 32 bits 'unsigned'. Note that there's *)
                                 (* no unsigned long in Pascal..          *)
                                 (* As cardinals are only 31 bits !!      *)
 +{$ENDIF}
 
  // No need to define our own type, just use the build-in one
+ {  Int64  = record              (* 64 ""            *)
