@@ -15,10 +15,8 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install FPC
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y fpc
+    - name: Setup FPC
+      uses: cwbudde/action-fpc@v1
 
     - name: Check for syntax errors (FPC syntax check)
       run: |
@@ -95,10 +93,8 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install FPC (includes ptop)
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y fpc
+    - name: Setup FPC
+      uses: cwbudde/action-fpc@v1
 
     - name: Check indentation consistency
       run: |
@@ -148,10 +144,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install FPC and Lazarus
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y fpc lazarus lcl-gtk2-3.0 lcl-units-3.0 libportaudio2 portaudio19-dev
+    - name: Setup FPC and Lazarus
+      uses: cwbudde/action-fpc@v1
+      with:
+        lazarus-version: '3.0.0'
+        install-dependencies: 'libportaudio2 portaudio19-dev'
 
     - name: Compile with all warnings enabled
       run: |
